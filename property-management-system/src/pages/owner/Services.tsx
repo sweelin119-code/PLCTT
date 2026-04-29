@@ -1,103 +1,110 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SearchOutlined, RightOutlined } from '@ant-design/icons';
+import {
+  getEnabledServiceCategories,
+  getEnabledServices,
+  onConfigChange,
+} from '../../services/ownerConfigService';
+import type { OwnerServiceCategoryConfig, OwnerServiceConfig } from '../../services/ownerConfigTypes';
 
 const OwnerServices: React.FC = () => {
   const navigate = useNavigate();
 
-  const serviceCategories = [
-    {
-      title: '🏠 物业服务',
-      items: [
-        { icon: '🔧', label: '在线报修', path: '/owner/repair', desc: '水、电、门窗等维修' },
-        { icon: '💳', label: '物业缴费', path: '/owner/payment', desc: '物业费、水电费缴纳' },
-        { icon: '🚗', label: '停车服务', path: '/owner/parking', desc: '车位查询、租赁' },
-        { icon: '🔑', label: '门禁管理', path: '/owner/access', desc: '手机开门、访客授权' },
-        { icon: '📦', label: '快递服务', path: '/owner/express', desc: '快递代收查询' },
-        { icon: '📋', label: '装修申请', path: '/owner/decoration', desc: '装修备案申请' },
-      ]
-    },
-    {
-      title: '🛍️ 生活服务',
-      items: [
-        { icon: '🧹', label: '家政保洁', path: '/owner/services/housekeeping', desc: '日常保洁、深度清洁' },
-        { icon: '🔌', label: '家电维修', path: '/owner/services/appliance', desc: '空调、冰箱等维修' },
-        { icon: '🛒', label: '社区团购', path: '/owner/services/groupbuy', desc: '生鲜、日用品团购' },
-        { icon: '🚚', label: '搬家服务', path: '/owner/services/moving', desc: '搬家公司预约' },
-        { icon: '🌿', label: '绿化服务', path: '/owner/services/greening', desc: '绿植养护、修剪' },
-        { icon: '👶', label: '家政月嫂', path: '/owner/services/nanny', desc: '月嫂、育儿嫂' },
-      ]
-    },
-    {
-      title: '💬 社区互动',
-      items: [
-        { icon: '📢', label: '社区公告', path: '/owner/notice', desc: '查看最新通知' },
-        { icon: '🗳️', label: '投票表决', path: '/owner/vote', desc: '业主大会投票' },
-        { icon: '💡', label: '投诉建议', path: '/owner/complaint', desc: '意见反馈' },
-        { icon: '🤝', label: '邻里互助', path: '/owner/community', desc: '邻里交流平台' },
-        { icon: '🎪', label: '社区活动', path: '/owner/activities', desc: '活动报名参与' },
-        { icon: '🏪', label: '周边商家', path: '/owner/shops', desc: '社区商家服务' },
-      ]
-    },
-  ];
+  const [categories, setCategories] = useState<OwnerServiceCategoryConfig[]>([]);
+  const [services, setServices] = useState<OwnerServiceConfig[]>([]);
+
+  const loadConfig = () => {
+    setCategories(getEnabledServiceCategories());
+    setServices(getEnabledServices());
+  };
+
+  useEffect(() => {
+    loadConfig();
+    const unsubscribe = onConfigChange(loadConfig);
+    return unsubscribe;
+  }, []);
+
+  // 按分类分组服务
+  const groupedServices = categories.map(cat => ({
+    ...cat,
+    items: services.filter(s => s.categoryId === cat.id),
+  })).filter(g => g.items.length > 0);
 
   return (
     <div style={{ padding: '12px 12px 0' }}>
-      {/* 搜索框 */}
-      <div style={{
-        background: '#fff',
-        borderRadius: 8,
-        padding: '8px 12px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 16,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-      }}>
-        <SearchOutlined style={{ color: '#999', fontSize: 16 }} />
-        <input
-          placeholder="搜索服务..."
-          style={{
-            border: 'none', outline: 'none', flex: 1,
-            fontSize: 14, color: '#333',
-            background: 'transparent',
-          }}
-        />
-      </div>
-
-      {/* 服务分类 */}
-      {serviceCategories.map((category, catIndex) => (
-        <div key={catIndex} style={{ marginBottom: 16 }}>
+      {/* ===== 服务分类 - 3列网格 ===== */}
+      {groupedServices.map((category, catIndex) => (
+        <div key={catIndex} style={{ marginBottom: 20 }}>
+          {/* 分类标题 */}
           <div style={{
-            fontSize: 16, fontWeight: 600, marginBottom: 12,
-            padding: '0 4px',
+            display: 'flex', alignItems: 'center', gap: 8,
+            marginBottom: 12, padding: '0 4px',
           }}>
-            {category.title}
+            <div style={{
+              width: 28, height: 28, borderRadius: 7,
+              background: category.bg,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 14,
+            }}>
+              {category.emoji}
+            </div>
+            <span style={{
+              fontSize: 16, fontWeight: 600, color: '#1d1d1f',
+              letterSpacing: -0.3,
+            }}>
+              {category.title}
+            </span>
           </div>
+
+          {/* 3列网格卡片 */}
           <div style={{
-            background: '#fff',
-            borderRadius: 12,
-            overflow: 'hidden',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gap: 10,
           }}>
             {category.items.map((item, itemIndex) => (
               <div
                 key={itemIndex}
                 onClick={() => navigate(item.path)}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '14px 16px',
-                  borderBottom: itemIndex < category.items.length - 1 ? '1px solid #f5f5f5' : 'none',
+                  background: '#fff',
+                  borderRadius: 14,
+                  padding: 16,
                   cursor: 'pointer',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                  border: '1px solid #f2f2f7',
+                  transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                  WebkitTapHighlightColor: 'transparent',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)';
+                  e.currentTarget.style.borderColor = category.color;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.03)';
+                  e.currentTarget.style.borderColor = '#f2f2f7';
                 }}
               >
-                <span style={{ fontSize: 24, marginRight: 12 }}>{item.icon}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 500, color: '#333' }}>{item.label}</div>
-                  <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>{item.desc}</div>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 11,
+                  background: category.bg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 22, marginBottom: 8,
+                }}>
+                  {item.icon}
                 </div>
-                <RightOutlined style={{ color: '#ccc', fontSize: 14 }} />
+                <div style={{
+                  fontSize: 13, fontWeight: 600, color: '#1d1d1f',
+                  letterSpacing: -0.2,
+                }}>
+                  {item.label}
+                </div>
               </div>
             ))}
           </div>

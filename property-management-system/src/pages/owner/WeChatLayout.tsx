@@ -9,13 +9,17 @@ interface WeChatLayoutProps {
   showTabBar?: boolean;
 }
 
-const WeChatLayout: React.FC<WeChatLayoutProps> = ({ children, title = '智慧社区', showBack = false, showTabBar = true }) => {
+const WeChatLayout: React.FC<WeChatLayoutProps> = ({
+  children,
+  title = '智慧社区',
+  showBack = false,
+  showTabBar = true,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 设置浏览器窗口标题
   useEffect(() => {
-    document.title = `业主微信端 - 物业全生命周期管理系统`;
+    document.title = `业主端 - 物业全生命周期管理系统`;
   }, []);
 
   const tabItems = [
@@ -30,41 +34,65 @@ const WeChatLayout: React.FC<WeChatLayoutProps> = ({ children, title = '智慧�
       maxWidth: 420,
       margin: '0 auto',
       minHeight: '100vh',
-      background: '#f5f5f5',
+      background: '#f2f2f7',
       position: 'relative',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      fontFamily:
+        '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
     }}>
-      {/* 顶部导航栏 - 模拟微信导航 */}
+      {/* ===== Apple 风格顶部导航栏 ===== */}
       <div style={{
-        background: 'linear-gradient(135deg, #07c160 0%, #06ad56 100%)',
-        color: '#fff',
-        padding: '44px 16px 12px',
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        color: '#1d1d1f',
+        padding: '50px 16px 12px',
         position: 'sticky',
         top: 0,
         zIndex: 100,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        borderBottom: '1px solid rgba(0,0,0,0.05)',
       }}>
         <div style={{ width: 60 }}>
-          {showBack && (
-            <span onClick={() => navigate(-1)} style={{ cursor: 'pointer', fontSize: 16 }}>
+          {showBack ? (
+            <span
+              onClick={() => navigate(-1)}
+              style={{
+                cursor: 'pointer', fontSize: 15, color: '#007AFF',
+                fontWeight: 500,
+              }}
+            >
               ← 返回
             </span>
-          )}
+          ) : null}
         </div>
-        <div style={{ fontSize: 17, fontWeight: 600 }}>{title}</div>
-        <div style={{ width: 60, textAlign: 'right', fontSize: 16, cursor: 'pointer' }} onClick={() => navigate('/owner/mine')}>
+        <div style={{
+          fontSize: 17, fontWeight: 600, color: '#1d1d1f',
+          letterSpacing: -0.3,
+        }}>
+          {title}
+        </div>
+        <div style={{
+          width: 60, textAlign: 'right', fontSize: 18,
+          color: '#1d1d1f', cursor: 'pointer', fontWeight: 600,
+          letterSpacing: 1,
+        }}
+          onClick={() => navigate('/owner/mine')}
+        >
           ···
         </div>
       </div>
 
-      {/* 内容区域 */}
-      <div style={{ paddingBottom: showTabBar ? 60 : 0, minHeight: 'calc(100vh - 100px)' }}>
+      {/* ===== 内容区域 ===== */}
+      <div style={{
+        paddingBottom: showTabBar ? 64 : 0,
+        minHeight: 'calc(100vh - 100px)',
+      }}>
         {children}
       </div>
 
-      {/* 底部Tab栏 - 模拟微信底部导航 */}
+      {/* ===== Apple 风格底部 Tab 栏 ===== */}
       {showTabBar && (
         <div style={{
           position: 'fixed',
@@ -73,15 +101,19 @@ const WeChatLayout: React.FC<WeChatLayoutProps> = ({ children, title = '智慧�
           transform: 'translateX(-50%)',
           width: '100%',
           maxWidth: 420,
-          background: '#fff',
-          borderTop: '1px solid #e8e8e8',
+          background: 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: '1px solid rgba(0,0,0,0.05)',
           display: 'flex',
-          padding: '6px 0',
-          paddingBottom: 'env(safe-area-inset-bottom, 8px)',
+          padding: '8px 0',
+          paddingBottom: 'max(8px, env(safe-area-inset-bottom, 8px))',
           zIndex: 100,
         }}>
           {tabItems.map(tab => {
-            const isActive = location.pathname === tab.key || location.pathname.startsWith(tab.key + '/');
+            const isActive =
+              location.pathname === tab.key ||
+              location.pathname.startsWith(tab.key + '/');
             return (
               <div
                 key={tab.key}
@@ -93,12 +125,29 @@ const WeChatLayout: React.FC<WeChatLayoutProps> = ({ children, title = '智慧�
                   alignItems: 'center',
                   gap: 2,
                   cursor: 'pointer',
-                  color: isActive ? '#07c160' : '#999',
+                  color: isActive ? '#007AFF' : '#8e8e93',
                   fontSize: 10,
+                  fontWeight: isActive ? 600 : 400,
+                  transition: 'color 0.2s ease',
+                  WebkitTapHighlightColor: 'transparent',
                 }}
               >
-                <span style={{ fontSize: 22 }}>{tab.icon}</span>
-                <span>{tab.label}</span>
+                <span style={{
+                  fontSize: 22,
+                  transition: 'transform 0.2s ease',
+                }}>
+                  {tab.icon}
+                </span>
+                <span style={{ fontSize: 10, letterSpacing: 0.2 }}>
+                  {tab.label}
+                </span>
+                {isActive && (
+                  <div style={{
+                    width: 4, height: 4, borderRadius: 2,
+                    background: '#007AFF',
+                    marginTop: 1,
+                  }} />
+                )}
               </div>
             );
           })}

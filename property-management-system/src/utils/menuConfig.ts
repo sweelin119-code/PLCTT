@@ -26,9 +26,21 @@ export const governmentMenus: MenuItem[] = [
     ]
   },
   {
+    key: 'portal-content',
+    label: '门户内容管理',
+    icon: 'FileTextOutlined',
+    children: [
+      { key: 'policy-info', label: '政策资讯管理', path: '/government/policy/info' },
+      { key: 'policy-info-add', label: '新增政策资讯', path: '/government/policy/info/add' },
+      { key: 'rule-mgmt', label: '规章制度管理', path: '/government/rule' },
+      { key: 'rule-add', label: '新增规章制度', path: '/government/rule/add' },
+      { key: 'info-category', label: '分类管理', path: '/government/policy/category' },
+    ]
+  },
+  {
     key: 'policy',
     label: '政策监管',
-    icon: 'FileTextOutlined',
+    icon: 'SafetyCertificateOutlined',
     children: [
       { key: 'policy-mgmt', label: '政策法规管理', path: '/government/policy' },
       { key: 'policy-enforce', label: '政策执行督查', path: '/government/policy/enforce' },
@@ -234,6 +246,16 @@ export const propertyMenus: MenuItem[] = [
     label: '品质管理',
     icon: 'StarOutlined',
     path: '/property/quality'
+  },
+  {
+    key: 'owner-config',
+    label: '业主端管理',
+    icon: 'AppstoreOutlined',
+    children: [
+      { key: 'owner-banner', label: 'Banner配置管理', path: '/property/owner-config/banner' },
+      { key: 'owner-quick-menu', label: '常用菜单配置', path: '/property/owner-config/quick-menu' },
+      { key: 'owner-service', label: '服务功能配置', path: '/property/owner-config/service' },
+    ]
   },
 ];
 
