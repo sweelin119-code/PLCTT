@@ -15,7 +15,8 @@
 				"F:/VSCode/PLCCT"
 			],
 			"alwaysAllow": [
-				"read_text_file"
+				"read_text_file",
+				"list_directory"
 			]
 		},
 		"sequential-thinking": {
