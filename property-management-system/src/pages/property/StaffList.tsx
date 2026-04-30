@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Card, Button, Input, Select, Tag, Space, message, Tooltip, Badge, Popconfirm } from 'antd';
 import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, LockOutlined, DeleteOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getUserList, toggleUserStatus, resetPassword, deleteUser } from '../../services/userService';
 import { getRolesByPortType } from '../../services/roleService';
 import { getProjectList } from '../../services/orgService';
 import { useAuth } from '../../contexts/AuthContext';
-import type { UserWithRoles, Role, Organization } from '../../services/types';
+import type { UserWithRoles, Role, Organization, PortType } from '../../services/types';
 
 const { Option } = Select;
 
@@ -20,6 +20,25 @@ const roleColorMap: Record<string, string> = {
   PROP_FINANCE: 'red',
 };
 
+// 从路径中提取端口类型
+const getPortFromPath = (pathname: string): PortType => {
+  const parts = pathname.split('/').filter(Boolean);
+  if (parts.length > 0) {
+    const port = parts[0];
+    if (['government', 'property', 'merchant', 'superadmin'].includes(port)) {
+      return port as PortType;
+    }
+  }
+  return 'property';
+};
+
+// 端口名称映射
+const portNameMap: Record<string, string> = {
+  property: '物业管理端',
+  government: '政府监管端',
+  merchant: '商家管理端',
+};
+
 const StaffList: React.FC = () => {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(false);
@@ -30,17 +49,22 @@ const StaffList: React.FC = () => {
   const [filterProject, setFilterProject] = useState<number | undefined>();
   const { hasPermission } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const portType = getPortFromPath(location.pathname);
 
-  const canAdd = hasPermission('property:staff:add');
-  const canEdit = hasPermission('property:staff:edit');
-  const canDelete = hasPermission('property:staff:delete');
+  // 根据当前端口动态生成权限编码前缀
+  const permPrefix = portType === 'government' ? 'government' : portType === 'merchant' ? 'merchant' : portType === 'superadmin' ? 'property' : 'property';
+
+  const canAdd = hasPermission(`${permPrefix}:staff:add`);
+  const canEdit = hasPermission(`${permPrefix}:staff:edit`);
+  const canDelete = hasPermission(`${permPrefix}:staff:delete`);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [userData, roleData, projectData] = await Promise.all([
-        getUserList({ keyword: keyword || undefined, roleId: filterRole, orgId: filterProject }),
-        getRolesByPortType('property'),
+        getUserList({ keyword: keyword || undefined, roleId: filterRole, orgId: filterProject, portType }),
+        getRolesByPortType(portType),
         getProjectList(),
       ]);
       setUsers(userData);
@@ -51,7 +75,7 @@ const StaffList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [keyword, filterRole, filterProject]);
+  }, [keyword, filterRole, filterProject, portType]);
 
   useEffect(() => {
     fetchData();
@@ -150,6 +174,24 @@ const StaffList: React.FC = () => {
         </div>
       ),
     },
+    ...(portType === 'property' ? [{
+      title: '可管理小区',
+      key: 'manageProjects',
+      width: 200,
+      render: (_: any, record: UserWithRoles) => {
+        if (!record.manageProjectIds || record.manageProjectIds.length === 0) {
+          return <span style={{ color: '#999' }}>全部小区</span>;
+        }
+        return (
+          <Space wrap>
+            {record.manageProjectIds.map(pid => {
+              const p = projects.find(pr => pr.id === pid);
+              return p ? <Tag key={pid} color="blue">{p.name}</Tag> : null;
+            })}
+          </Space>
+        );
+      },
+    }] : []),
     {
       title: '创建时间',
       dataIndex: 'createTime',
@@ -168,7 +210,7 @@ const StaffList: React.FC = () => {
                 type="link"
                 size="small"
                 icon={<EditOutlined />}
-                onClick={() => navigate(`/property/staff/edit/${record.id}`)}
+                onClick={() => navigate(`/${portType}/staff/edit/${record.id}`)}
               >
                 编辑
               </Button>
@@ -263,7 +305,8 @@ const StaffList: React.FC = () => {
       <Card
         title={
           <Space>
-            <span>人员列表</span>
+            <span>账号列表</span>
+            <Tag color="blue">{portNameMap[portType] || portType}</Tag>
             <span style={{ fontSize: 13, color: '#999', fontWeight: 400 }}>
               共 {users.length} 人
             </span>
@@ -271,8 +314,8 @@ const StaffList: React.FC = () => {
         }
         extra={
           canAdd && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/property/staff/add')}>
-              新增人员
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/${portType}/staff/add`)}>
+              新增账号
             </Button>
           )
         }

@@ -5,7 +5,7 @@ export {};
 export type OrgType = 'city' | 'area' | 'street' | 'company' | 'project' | 'shop';
 
 // 端口类型
-export type PortType = 'government' | 'property' | 'merchant' | 'owner' | 'wechat';
+export type PortType = 'government' | 'property' | 'merchant' | 'owner' | 'wechat' | 'superadmin';
 
 // 用户状态
 export type UserStatus = 0 | 1; // 0=禁用 1=启用
@@ -45,6 +45,8 @@ export interface User {
   avatar?: string;
   wechatOpenid?: string;
   status: UserStatus;
+  portType: PortType; // 所属端类型：government/property/merchant/owner/wechat
+  manageProjectIds?: number[]; // 可管理的小区项目ID列表（空数组表示无限制）
   createTime: string;
 }
 
@@ -54,6 +56,7 @@ export interface UserRole {
   userId: number;
   roleId: number;
   orgId: number; // 所属组织ID（数据范围）
+  portType: PortType; // 所属端类型
   role?: Role;
   org?: Organization;
 }

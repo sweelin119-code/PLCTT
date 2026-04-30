@@ -1,5 +1,5 @@
 // ===== 用户管理服务（Mock 实现）=====
-import type { User, UserRole, UserWithRoles, UserStatus } from './types';
+import type { User, UserRole, UserWithRoles, UserStatus, PortType } from './types';
 import { mockUsers, mockUserRoles, findRoleById, findOrgById } from './mockData';
 
 const delay = (ms: number = 200) => new Promise(resolve => setTimeout(resolve, ms));
@@ -10,10 +10,16 @@ export async function getUserList(params?: {
   roleId?: number;
   orgId?: number;
   status?: UserStatus;
+  portType?: PortType;
 }): Promise<UserWithRoles[]> {
   await delay();
 
   let filtered = [...mockUsers];
+
+  // 按端口类型筛选
+  if (params?.portType) {
+    filtered = filtered.filter(u => u.portType === params.portType);
+  }
 
   if (params?.keyword) {
     const kw = params.keyword.toLowerCase();
@@ -77,7 +83,9 @@ export async function createUser(data: {
   realName: string;
   roleId: number;
   orgId: number;
+  portType: PortType;
   status?: UserStatus;
+  manageProjectIds?: number[];
 }): Promise<UserWithRoles> {
   await delay();
 
@@ -94,7 +102,9 @@ export async function createUser(data: {
     phone: data.phone,
     password: data.phone, // 默认密码=手机号
     realName: data.realName,
+    portType: data.portType,
     status: data.status ?? 1,
+    manageProjectIds: data.manageProjectIds,
     createTime: now,
   };
 
@@ -105,6 +115,7 @@ export async function createUser(data: {
     userId: newId,
     roleId: data.roleId,
     orgId: data.orgId,
+    portType: data.portType,
     role: findRoleById(data.roleId),
     org: findOrgById(data.orgId),
   };
@@ -124,6 +135,7 @@ export async function updateUser(id: number, data: {
   status?: UserStatus;
   roleId?: number;
   orgId?: number;
+  manageProjectIds?: number[];
 }): Promise<UserWithRoles> {
   await delay();
 
@@ -139,6 +151,7 @@ export async function updateUser(id: number, data: {
   if (data.realName) mockUsers[userIndex].realName = data.realName;
   if (data.phone) mockUsers[userIndex].phone = data.phone;
   if (data.status !== undefined) mockUsers[userIndex].status = data.status;
+  if (data.manageProjectIds !== undefined) mockUsers[userIndex].manageProjectIds = data.manageProjectIds;
 
   // 更新角色关联
   if (data.roleId || data.orgId) {

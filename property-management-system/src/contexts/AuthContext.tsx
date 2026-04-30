@@ -5,7 +5,7 @@ import * as authService from '../services/authService';
 interface AuthContextType {
   currentUser: CurrentUser | null;
   loading: boolean;
-  login: (data: LoginRequest) => Promise<void>;
+  login: (data: LoginRequest, port?: string) => Promise<void>;
   logout: () => Promise<void>;
   switchRole: (roleId: number) => Promise<void>;
   hasPermission: (permCode: string) => boolean;
@@ -32,8 +32,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     init();
   }, []);
 
-  const login = useCallback(async (data: LoginRequest) => {
-    const response = await authService.login(data);
+  const login = useCallback(async (data: LoginRequest, port?: string) => {
+    const response = await authService.login(data, port);
     const roles = response.user.roles;
     setCurrentUser({
       user: response.user,

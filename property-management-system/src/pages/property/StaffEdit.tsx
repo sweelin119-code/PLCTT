@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Input, Select, Button, message, Space, Switch, Spin } from 'antd';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { getUserById, createUser, updateUser } from '../../services/userService';
 import { getRolesByPortType } from '../../services/roleService';
 import { getProjectList, getCompanyList } from '../../services/orgService';
-import type { Role, Organization } from '../../services/types';
+import type { Role, Organization, PortType } from '../../services/types';
 
 const { Option } = Select;
+
+// 从路径中提取端口类型
+const getPortFromPath = (pathname: string): PortType => {
+  const parts = pathname.split('/').filter(Boolean);
+  if (parts.length > 0) {
+    const port = parts[0];
+    if (['government', 'property', 'merchant', 'superadmin'].includes(port)) {
+      return port as PortType;
+    }
+  }
+  return 'property';
+};
 
 const StaffEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,20 +29,24 @@ const StaffEdit: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [projects, setProjects] = useState<Organization[]>([]);
   const [companies, setCompanies] = useState<Organization[]>([]);
+  const [allProjects, setAllProjects] = useState<Organization[]>([]);
   const navigate = useNavigate();
+  const location = useLocation();
+  const portType = getPortFromPath(location.pathname);
 
   useEffect(() => {
     const init = async () => {
       setLoading(true);
       try {
         const [roleData, projectData, companyData] = await Promise.all([
-          getRolesByPortType('property'),
+          getRolesByPortType(portType),
           getProjectList(),
           getCompanyList(),
         ]);
         setRoles(roleData);
         setProjects(projectData);
         setCompanies(companyData);
+        setAllProjects(projectData);
 
         // 编辑模式：加载用户数据
         if (isEdit && id) {
@@ -42,10 +58,11 @@ const StaffEdit: React.FC = () => {
               status: user.status === 1,
               roleId: user.roles[0]?.roleId,
               orgId: user.roles[0]?.orgId,
+              manageProjectIds: user.manageProjectIds || [],
             });
           } else {
             message.error('用户不存在');
-            navigate('/property/staff/list');
+            navigate(`/${portType}/staff/list`);
           }
         }
       } catch (err: any) {
@@ -55,7 +72,7 @@ const StaffEdit: React.FC = () => {
       }
     };
     init();
-  }, [id, isEdit, form, navigate]);
+  }, [id, isEdit, form, navigate, portType]);
 
   const handleSubmit = async (values: any) => {
     setSubmitting(true);
@@ -67,6 +84,7 @@ const StaffEdit: React.FC = () => {
           status: values.status ? 1 : 0,
           roleId: values.roleId,
           orgId: values.orgId,
+          manageProjectIds: values.manageProjectIds,
         });
         message.success('修改成功');
       } else {
@@ -75,11 +93,13 @@ const StaffEdit: React.FC = () => {
           realName: values.realName,
           roleId: values.roleId,
           orgId: values.orgId,
+          portType,
           status: values.status ? 1 : 0,
+          manageProjectIds: values.manageProjectIds,
         });
         message.success('新增成功');
       }
-      navigate('/property/staff/list');
+      navigate(`/${portType}/staff/list`);
     } catch (err: any) {
       message.error(err.message || '操作失败');
     } finally {
@@ -89,7 +109,7 @@ const StaffEdit: React.FC = () => {
 
   return (
     <Spin spinning={loading}>
-      <Card title={isEdit ? '编辑人员' : '新增人员'}>
+      <Card title={isEdit ? '编辑账号' : '新增账号'}>
         <Form
           form={form}
           layout="vertical"
@@ -153,6 +173,25 @@ const StaffEdit: React.FC = () => {
             </Select>
           </Form.Item>
 
+          {portType === 'property' && (
+            <Form.Item
+              name="manageProjectIds"
+              label="可管理小区"
+              tooltip="选择该账号可管理的小区项目，不选或留空表示可管理所有小区"
+            >
+              <Select
+                mode="multiple"
+                placeholder="请选择可管理的小区（留空表示全部）"
+                allowClear
+                style={{ width: '100%' }}
+              >
+                {allProjects.map(p => (
+                  <Option key={p.id} value={p.id}>{p.name}</Option>
+                ))}
+              </Select>
+            </Form.Item>
+          )}
+
           <Form.Item
             name="status"
             label="状态"
@@ -166,7 +205,7 @@ const StaffEdit: React.FC = () => {
               <Button type="primary" htmlType="submit" loading={submitting}>
                 {isEdit ? '保存修改' : '确认新增'}
               </Button>
-              <Button onClick={() => navigate('/property/staff/list')}>
+              <Button onClick={() => navigate(`/${portType}/staff/list`)}>
                 取消
               </Button>
             </Space>

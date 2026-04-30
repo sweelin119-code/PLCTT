@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Table, Switch, Button, message, Space, Tag, Modal, Tooltip } from 'antd';
-import { MenuOutlined, ReloadOutlined, SaveOutlined, EditOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Card, Table, Switch, Button, message, Space, Tag, Modal, Tooltip, Input } from 'antd';
+import { MenuOutlined, ReloadOutlined, SaveOutlined, EditOutlined, ArrowUpOutlined, ArrowDownOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import type { MenuItem } from '../../utils/menuConfig';
 import { governmentMenus, propertyMenus, merchantMenus } from '../../utils/menuConfig';
 
@@ -30,15 +30,27 @@ interface MenuVisibility {
   };
 }
 
+// 菜单名称自定义配置
+interface MenuLabels {
+  [portKey: string]: {
+    [menuKey: string]: string;
+  };
+}
+
 const STORAGE_KEY = 'plcct_port_config';
 
 const PortConfig: React.FC = () => {
   const [ports, setPorts] = useState<PortInfo[]>([]);
   const [menuVisibility, setMenuVisibility] = useState<MenuVisibility>({});
+  const [menuLabels, setMenuLabels] = useState<MenuLabels>({});
   const [editMenuVisible, setEditMenuVisible] = useState(false);
   const [editMenuPort, setEditMenuPort] = useState<string>('');
   const [editMenuItems, setEditMenuItems] = useState<MenuItem[]>([]);
   const [saving, setSaving] = useState(false);
+  // 正在编辑名称的菜单 key
+  const [editingLabelKey, setEditingLabelKey] = useState<string | null>(null);
+  const [editingLabelValue, setEditingLabelValue] = useState('');
+  const inputRef = useRef<any>(null);
 
   // 初始化
   useEffect(() => {
@@ -48,6 +60,7 @@ const PortConfig: React.FC = () => {
         const parsed = JSON.parse(saved);
         setPorts(parsed.ports || defaultPorts);
         setMenuVisibility(parsed.menuVisibility || {});
+        setMenuLabels(parsed.menuLabels || {});
         return;
       } catch {}
     }
@@ -79,6 +92,7 @@ const PortConfig: React.FC = () => {
   const handleOpenMenuEdit = (port: PortInfo) => {
     setEditMenuPort(port.key);
     setEditMenuItems(JSON.parse(JSON.stringify(port.menus)));
+    setEditingLabelKey(null);
     setEditMenuVisible(true);
   };
 
@@ -93,9 +107,58 @@ const PortConfig: React.FC = () => {
     }));
   };
 
+  // 开始编辑菜单名称
+  const handleStartEditLabel = (menuKey: string, currentLabel: string) => {
+    setEditingLabelKey(menuKey);
+    setEditingLabelValue(currentLabel);
+    // 在下一个 tick 聚焦输入框
+    setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, 50);
+  };
+
+  // 确认编辑菜单名称
+  const handleConfirmEditLabel = () => {
+    if (!editingLabelKey || !editingLabelValue.trim()) {
+      setEditingLabelKey(null);
+      return;
+    }
+    const newLabel = editingLabelValue.trim();
+    // 更新 menuLabels
+    setMenuLabels(prev => ({
+      ...prev,
+      [editMenuPort]: {
+        ...prev[editMenuPort],
+        [editingLabelKey]: newLabel,
+      },
+    }));
+    // 同时更新 editMenuItems 中的 label（用于实时显示）
+    const updateLabel = (items: MenuItem[]): MenuItem[] => {
+      return items.map(item => {
+        const itemKey = item.path || item.key;
+        if (itemKey === editingLabelKey) {
+          return { ...item, label: newLabel };
+        }
+        if (item.children) {
+          return { ...item, children: updateLabel(item.children) };
+        }
+        return item;
+      });
+    };
+    setEditMenuItems(prev => updateLabel(prev));
+    setEditingLabelKey(null);
+  };
+
+  // 取消编辑菜单名称
+  const handleCancelEditLabel = () => {
+    setEditingLabelKey(null);
+  };
+
   // 关闭菜单编辑弹窗时，将排序后的菜单同步回 ports
   const handleCloseMenuEdit = () => {
     setEditMenuVisible(false);
+    setEditingLabelKey(null);
     // 将编辑后的菜单顺序同步到 ports 状态
     setPorts(prev => prev.map(p =>
       p.key === editMenuPort ? { ...p, menus: editMenuItems } : p
@@ -106,7 +169,7 @@ const PortConfig: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ports, menuVisibility }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ports, menuVisibility, menuLabels }));
       message.success('端口配置已保存');
     } catch {
       message.error('保存失败');
@@ -125,6 +188,7 @@ const PortConfig: React.FC = () => {
       onOk: () => {
         localStorage.removeItem(STORAGE_KEY);
         setPorts(defaultPorts);
+        setMenuLabels({});
         const defaultVisibility: MenuVisibility = {};
         defaultPorts.forEach((p: PortInfo) => {
           defaultVisibility[p.key] = {};
@@ -186,6 +250,13 @@ const PortConfig: React.FC = () => {
     });
   }, []);
 
+  // 获取菜单显示名称（优先使用自定义名称）
+  const getMenuLabel = (item: MenuItem): string => {
+    const itemKey = item.path || item.key;
+    const customLabel = menuLabels[editMenuPort]?.[itemKey];
+    return customLabel || item.label;
+  };
+
   // 渲染菜单树（用于弹窗展示）
   const renderMenuItems = (items: MenuItem[], level: number = 0, parentIndex?: number) => {
     return items.map((item: MenuItem, idx: number) => {
@@ -193,6 +264,9 @@ const PortConfig: React.FC = () => {
       const checked = menuVisibility[editMenuPort]?.[visKey] !== false;
       const isFirst = idx === 0;
       const isLast = idx === items.length - 1;
+      const displayLabel = getMenuLabel(item);
+      const isEditing = editingLabelKey === visKey;
+
       return (
         <div key={visKey} style={{ marginLeft: level * 24, marginBottom: 8 }}>
           <Space>
@@ -251,13 +325,45 @@ const PortConfig: React.FC = () => {
               checked={checked}
               onChange={(chk) => handleToggleMenuItem(visKey, chk)}
             />
-            <span style={{
-              fontWeight: level === 0 ? 600 : 400,
-              color: level === 0 ? '#000' : '#666',
-              fontSize: level === 0 ? 14 : 13,
-            }}>
-              {item.label}
-            </span>
+            {/* 菜单名称 - 可编辑 */}
+            {isEditing ? (
+              <Input
+                ref={inputRef}
+                size="small"
+                value={editingLabelValue}
+                onChange={e => setEditingLabelValue(e.target.value)}
+                onPressEnter={handleConfirmEditLabel}
+                onBlur={handleConfirmEditLabel}
+                style={{ width: 150, fontSize: level === 0 ? 14 : 13 }}
+                suffix={
+                  <Space size={2}>
+                    <CheckOutlined
+                      style={{ color: '#52c41a', cursor: 'pointer', fontSize: 12 }}
+                      onClick={handleConfirmEditLabel}
+                    />
+                    <CloseOutlined
+                      style={{ color: '#ff4d4f', cursor: 'pointer', fontSize: 12 }}
+                      onClick={handleCancelEditLabel}
+                    />
+                  </Space>
+                }
+              />
+            ) : (
+              <span
+                style={{
+                  fontWeight: level === 0 ? 600 : 400,
+                  color: level === 0 ? '#000' : '#666',
+                  fontSize: level === 0 ? 14 : 13,
+                  cursor: 'pointer',
+                  borderBottom: '1px dashed #d9d9d9',
+                  padding: '0 2px',
+                }}
+                onClick={() => handleStartEditLabel(visKey, displayLabel)}
+                title="点击修改名称"
+              >
+                {displayLabel}
+              </span>
+            )}
             {item.path && (
               <Tag style={{ fontSize: 11 }}>{item.path}</Tag>
             )}
@@ -386,6 +492,7 @@ const PortConfig: React.FC = () => {
           <strong style={{ color: '#333' }}>💡 说明：</strong><br />
           • <strong>启用/禁用</strong>：控制该端口是否在首页入口显示，禁用后用户无法访问该端口<br />
           • <strong>菜单配置</strong>：控制该端口侧边栏菜单项的显示/隐藏，可精细化控制用户可见的功能模块<br />
+          • <strong>菜单名称</strong>：点击菜单名称可直接修改，自定义名称会覆盖默认名称<br />
           • <strong>排序</strong>：控制首页入口卡片的排列顺序（目前按固定顺序排列）<br />
           • 配置保存后需刷新页面生效
         </div>
@@ -401,10 +508,10 @@ const PortConfig: React.FC = () => {
             完成
           </Button>
         }
-        width={480}
+        width={560}
       >
         <div style={{ marginBottom: 16, fontSize: 13, color: '#666' }}>
-          勾选需要显示的菜单项，取消勾选则隐藏该菜单；使用 ↑↓ 按钮调整菜单排序：
+          勾选需要显示的菜单项，取消勾选则隐藏该菜单；使用 ↑↓ 按钮调整菜单排序；<strong>点击菜单名称可修改名称</strong>：
         </div>
         <div style={{ maxHeight: 400, overflow: 'auto' }}>
           {editMenuItems.length > 0 ? (

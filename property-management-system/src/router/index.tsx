@@ -1,12 +1,13 @@
 import React from 'react';
+import OrganizationManage from '../pages/property/OrganizationManage';
 import RepairOrderManage from '../pages/property/RepairOrderManage';
 import ComplaintManage from '../pages/property/ComplaintManage';
 import ComplaintSupervise from '../pages/government/ComplaintSupervise';
 import ComplaintStats from '../pages/government/ComplaintStats';
 import OwnerRepair from '../pages/owner/OwnerRepair';
 import OwnerComplaint from '../pages/owner/OwnerComplaint';
-import { createBrowserRouter, Navigate, Outlet, Link } from 'react-router-dom';
-import { AppstoreOutlined, BankOutlined, ShopOutlined, WechatOutlined, TeamOutlined, MessageOutlined, SettingOutlined } from '@ant-design/icons';
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
+import { AppstoreOutlined, BankOutlined, ShopOutlined, WechatOutlined, TeamOutlined, MessageOutlined, SettingOutlined, HomeOutlined, CloudSyncOutlined, ApartmentOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
 import PCLayout from '../layouts/PCLayout';
@@ -37,9 +38,9 @@ import RoleManage from '../pages/property/RoleManage';
 import PortConfig from '../pages/superadmin/PortConfig';
 
 // 企业相关页面
-import CompanyRegister from '../pages/property/CompanyRegister';
 import QualificationReview from '../pages/government/QualificationReview';
 import CompanyList from '../pages/government/CompanyList';
+import CompanyRegister from '../pages/property/CompanyRegister';
 
 // 商家管理相关页面
 import MerchantManage from '../pages/property/MerchantManage';
@@ -49,6 +50,29 @@ import MerchantList from '../pages/government/MerchantList';
 import BannerConfigManage from '../pages/property/BannerConfigManage';
 import QuickMenuConfig from '../pages/property/QuickMenuConfig';
 import ServiceConfigManage from '../pages/property/ServiceConfigManage';
+
+// 资产管理页面
+import AssetOverview from '../pages/property/asset/AssetOverview';
+import BuildingManage from '../pages/property/asset/BuildingManage';
+import HouseManage from '../pages/property/asset/HouseManage';
+import ParkingManage from '../pages/property/asset/ParkingManage';
+
+// 业主管理页面
+import OwnerManage from '../pages/property/owner/OwnerManage';
+
+// 数据同步页面
+import GovDataSync from '../pages/property/sync/GovDataSync';
+
+// 收费管理页面
+import FeeItemManage from '../pages/property/finance/FeeItemManage';
+import ChargeRuleManage from '../pages/property/finance/ChargeRuleManage';
+import BillManage from '../pages/property/finance/BillManage';
+import PaymentManage from '../pages/property/finance/PaymentManage';
+import CollectionManage from '../pages/property/finance/CollectionManage';
+import ReportManage from '../pages/property/finance/ReportManage';
+
+// 政府端资产查看页面
+import GovernmentAssetView from '../pages/government/asset/GovernmentAssetView';
 
 // 门户内容管理页面
 import PolicyInfoManage from '../pages/government/PolicyInfoManage';
@@ -87,6 +111,8 @@ const iconMap: Record<string, React.ReactNode> = {
   UnorderedListOutlined: <MessageOutlined />,
   BulbOutlined: <AppstoreOutlined />,
   BarChartOutlined: <AppstoreOutlined />,
+  HomeOutlined: <HomeOutlined />,
+  CloudSyncOutlined: <CloudSyncOutlined />,
 };
 
 // 转换菜单项为 antd Menu 格式
@@ -136,6 +162,11 @@ const router = createBrowserRouter([
     path: '/rule/list',
     element: <ContentListPage />,
   },
+  // 企业入驻（无需登录）
+  {
+    path: '/company/register',
+    element: <CompanyRegister />,
+  },
   // 政府监管端路由
   {
     path: '/government',
@@ -175,6 +206,10 @@ const router = createBrowserRouter([
       { path: 'data/quality', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>服务质量排名 - 开发中</div> },
       { path: 'data/hotspot', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>投诉热点分析 - 开发中</div> },
       { path: 'data/screen', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>可视化大屏 - 开发中</div> },
+      // 资产查看
+      { path: 'asset/view', element: <GovernmentAssetView /> },
+      // 组织架构管理
+      { path: 'organization', element: <OrganizationManage /> },
       // 街道物业管理部门路由
       { path: 'street/supervise', element: <StreetOffice /> },
       { path: 'street/dispute', element: <StreetOffice /> },
@@ -195,12 +230,11 @@ const router = createBrowserRouter([
   // 物业管理端路由
   {
     path: '/property',
-    element: <AuthGuard><PCLayout menuItems={propertyMenuItems} title="物业管理端" subTitle="物业全生命周期管理系统" /></AuthGuard>,
+    element: <AuthGuard><PCLayout menuItems={propertyMenuItems} title="物业管理端" subTitle="物业全生命周期管理系统" showCommunitySwitcher /></AuthGuard>,
     children: [
       { index: true, element: <Navigate to="/property/dashboard" replace /> },
       { path: 'dashboard', element: <PropertyDashboard /> },
-      // 企业入驻
-      { path: 'company/register', element: <CompanyRegister /> },
+
       // 商家管理
       { path: 'merchant/list', element: <MerchantManage /> },
       // 人员管理
@@ -219,10 +253,13 @@ const router = createBrowserRouter([
       { path: 'security/check', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>安全检查 - 开发中</div> },
       { path: 'security/fire', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>消防管理 - 开发中</div> },
       { path: 'security/emergency', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>应急预案 - 开发中</div> },
-      { path: 'finance/fee', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>物业费管理 - 开发中</div> },
-      { path: 'finance/parking', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>停车费管理 - 开发中</div> },
-      { path: 'finance/repair-fund', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>维修资金 - 开发中</div> },
-      { path: 'finance/report', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>财务报表 - 开发中</div> },
+      // 收费管理
+      { path: 'finance/fee-items', element: <FeeItemManage /> },
+      { path: 'finance/charge-rules', element: <ChargeRuleManage /> },
+      { path: 'finance/bills', element: <BillManage /> },
+      { path: 'finance/payments', element: <PaymentManage /> },
+      { path: 'finance/collection', element: <CollectionManage /> },
+      { path: 'finance/reports', element: <ReportManage /> },
       { path: 'device/asset', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>设备台账 - 开发中</div> },
       { path: 'device/inspect', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>设备巡检 - 开发中</div> },
       { path: 'device/energy', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>能耗管理 - 开发中</div> },
@@ -235,10 +272,23 @@ const router = createBrowserRouter([
       { path: 'workorder/stats', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>工单统计 - 开发中</div> },
       { path: 'contract', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>合同管理 - 开发中</div> },
       { path: 'quality', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>品质管理 - 开发中</div> },
+      // 组织架构管理
+      { path: 'organization', element: <OrganizationManage /> },
       // 业主端管理
       { path: 'owner-config/banner', element: <BannerConfigManage /> },
       { path: 'owner-config/quick-menu', element: <QuickMenuConfig /> },
       { path: 'owner-config/service', element: <ServiceConfigManage /> },
+      // 资产管理
+      { path: 'asset/overview', element: <AssetOverview /> },
+      { path: 'asset/building', element: <BuildingManage /> },
+      { path: 'asset/house', element: <HouseManage /> },
+      { path: 'asset/parking', element: <ParkingManage /> },
+      // 业主管理
+      { path: 'owner/archive', element: <OwnerManage /> },
+      // 资产管理 - 数据同步
+      { path: 'asset/sync', element: <GovDataSync /> },
+      // 企业入驻（重定向到顶层路由）
+      { path: 'company/register', element: <Navigate to="/company/register" replace /> },
     ],
   },
   // 商家端路由
@@ -254,6 +304,8 @@ const router = createBrowserRouter([
       { path: 'staff/edit/:id', element: <StaffEdit /> },
       // 系统管理 - 角色管理
       { path: 'roles', element: <RoleManage /> },
+      // 组织架构管理
+      { path: 'organization', element: <OrganizationManage /> },
       { path: 'shop/info', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>店铺信息 - 开发中</div> },
       { path: 'shop/cert', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>资质认证 - 开发中</div> },
       { path: 'shop/decorate', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>店铺装修 - 开发中</div> },
@@ -279,6 +331,7 @@ const router = createBrowserRouter([
       { key: '/superadmin/system', label: '系统管理', icon: <SettingOutlined />, children: [
         { key: '/superadmin/staff/list', label: '账号管理', icon: <TeamOutlined /> },
         { key: '/superadmin/roles', label: '角色管理', icon: <SettingOutlined /> },
+        { key: '/superadmin/organization', label: '组织架构管理', icon: <ApartmentOutlined /> },
       ]},
       { key: '/superadmin/wechat', label: '公众号管理', icon: <WechatOutlined />, children: [
         { key: '/superadmin/wechat/templates', label: '消息模板管理', icon: <MessageOutlined /> },
@@ -295,6 +348,8 @@ const router = createBrowserRouter([
       { path: 'staff/add', element: <StaffEdit /> },
       { path: 'staff/edit/:id', element: <StaffEdit /> },
       { path: 'roles', element: <RoleManage /> },
+      // 组织架构管理
+      { path: 'organization', element: <OrganizationManage /> },
       // 公众号管理
       { path: 'wechat/templates', element: <WeChatMessageTemplate /> },
       { path: 'wechat/users', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>粉丝管理 - 开发中</div> },

@@ -23,8 +23,15 @@ const CompanyRegister: React.FC = () => {
   };
 
   return (
-    <div>
-      <Card title="物业企业入驻申请">
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      minHeight: '100vh',
+      padding: '40px 24px',
+      background: '#f5f5f5',
+    }}>
+      <Card title="物业企业入驻申请" style={{ maxWidth: 800, width: '100%' }}>
         <Steps
           current={currentStep}
           style={{ marginBottom: 32, maxWidth: 600 }}

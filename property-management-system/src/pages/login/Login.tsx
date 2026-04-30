@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, message, Tabs, Space, Tag } from 'antd';
-import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Form, Input, Button, message, Tabs, Space, Tag, Divider } from 'antd';
+import { UserOutlined, LockOutlined, SafetyOutlined, ShopOutlined, RightOutlined } from '@ant-design/icons';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateCaptcha } from '../../services/authService';
 
@@ -62,22 +62,25 @@ const Login: React.FC = () => {
   // 根据端口显示不同的测试账号
   const testAccounts: Record<string, { role: string; phone: string }[]> = {
     government: [
-      { role: '市级管理员', phone: '13800000001' },
-      { role: '区级管理员', phone: '13800000002' },
-      { role: '街道办人员', phone: '13800000003' },
+      { role: '市级管理员（陈局长）', phone: '13900000001' },
+      { role: '区级管理员（周科长）', phone: '13900000002' },
     ],
     property: [
-      { role: '物业管理员', phone: '13800000001' },
-      { role: '项目经理', phone: '13800000002' },
-      { role: '客服人员', phone: '13800000003' },
-      { role: '工程人员', phone: '13800000004' },
+      { role: '系统管理员', phone: '13800000001' },
+      { role: '项目经理（张建国）', phone: '13800000002' },
+      { role: '客服人员（李明霞）', phone: '13800000003' },
+      { role: '工程人员（王师傅）', phone: '13800000004' },
     ],
     merchant: [
-      { role: '商家管理员', phone: '13800000001' },
-      { role: '店铺运营', phone: '13800000002' },
+      { role: '商家管理员（陈老板）', phone: '13700000001' },
+      { role: '店员（小张）', phone: '13700000002' },
+    ],
+    owner: [
+      { role: '业主（孙业主）', phone: '13600000001' },
+      { role: '家庭成员（周太太）', phone: '13600000002' },
     ],
     superadmin: [
-      { role: '超级管理员', phone: '13800000001' },
+      { role: '超级管理员', phone: '13000000001' },
     ],
   };
 
@@ -97,10 +100,15 @@ const Login: React.FC = () => {
   const handlePasswordLogin = async (values: { phone: string; password: string }) => {
     setLoading(true);
     try {
-      await login(values);
+      await login(values, port);
       message.success('登录成功');
       // 登录成功后跳转到对应端口的首页
-      const targetPath = port === 'owner' ? '/owner/home' : `/${port}/dashboard`;
+      let targetPath = `/${port}/dashboard`;
+      if (port === 'owner') {
+        targetPath = '/owner/home';
+      } else if (port === 'superadmin') {
+        targetPath = '/superadmin/port-config';
+      }
       navigate(targetPath, { replace: true });
     } catch (err: any) {
       message.error(err.message || '登录失败');
@@ -117,9 +125,14 @@ const Login: React.FC = () => {
     }
     setLoading(true);
     try {
-      await login({ phone: values.phone, password: values.phone });
+      await login({ phone: values.phone, password: values.phone }, port);
       message.success('登录成功');
-      const targetPath = port === 'owner' ? '/owner/home' : `/${port}/dashboard`;
+      let targetPath = `/${port}/dashboard`;
+      if (port === 'owner') {
+        targetPath = '/owner/home';
+      } else if (port === 'superadmin') {
+        targetPath = '/superadmin/port-config';
+      }
       navigate(targetPath, { replace: true });
     } catch (err: any) {
       message.error(err.message || '登录失败');
@@ -312,6 +325,29 @@ const Login: React.FC = () => {
           </Form>
         )}
 
+        {/* 物业登录端 - 企业入驻入口 */}
+        {port === 'property' && (
+          <div style={{ textAlign: 'center', marginTop: 12 }}>
+            <Link
+              to="/company/register"
+              style={{
+                color: '#52c41a',
+                fontSize: 13,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                transition: 'opacity 0.3s',
+              }}
+              onMouseEnter={(e) => { (e.target as HTMLElement).style.opacity = '0.7'; }}
+              onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '1'; }}
+            >
+              <ShopOutlined />
+              还没有物业账号？立即申请入驻
+              <RightOutlined style={{ fontSize: 10 }} />
+            </Link>
+          </div>
+        )}
+
         {/* 测试账号提示 */}
         <div style={{
           marginTop: 16,
@@ -327,6 +363,25 @@ const Login: React.FC = () => {
           </div>
           {accounts.map((acc, i) => (
             <div key={i}>{acc.role}：{acc.phone} / {acc.phone}</div>
+          ))}
+        </div>
+
+        {/* 端口切换提示 */}
+        <Divider style={{ fontSize: 11, color: '#bbb', margin: '16px 0 0' }}>
+          切换登录端口
+        </Divider>
+        <div style={{ textAlign: 'center', marginTop: 8, fontSize: 12, color: '#999' }}>
+          {Object.entries(PORT_INFO).map(([key, info]) => (
+            key !== port ? (
+              <Tag
+                key={key}
+                color={info.color}
+                style={{ cursor: 'pointer', marginBottom: 4 }}
+                onClick={() => navigate(`/login?port=${key}`, { replace: true })}
+              >
+                {info.icon} {info.name}
+              </Tag>
+            ) : null
           ))}
         </div>
       </div>

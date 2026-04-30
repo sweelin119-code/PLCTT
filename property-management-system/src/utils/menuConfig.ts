@@ -23,6 +23,7 @@ export const governmentMenus: MenuItem[] = [
     children: [
       { key: 'gov-staff-list', label: '账号管理', path: '/government/staff/list' },
       { key: 'gov-role-mgmt', label: '角色管理', path: '/government/roles' },
+      { key: 'gov-organization', label: '组织架构管理', path: '/government/organization' },
     ]
   },
   {
@@ -54,6 +55,7 @@ export const governmentMenus: MenuItem[] = [
       { key: 'qual-review', label: '资质审核', path: '/government/qualification/review' },
       { key: 'qual-cert', label: '物业备案管理', path: '/government/qualification/cert' },
       { key: 'qual-annual', label: '年检续期', path: '/government/qualification/annual' },
+      { key: 'gov-asset-view', label: '小区资产查看', path: '/government/asset/view' },
       { key: 'contract-reg', label: '合同备案管理', path: '/government/industry/contract' },
       { key: 'credit', label: '信用评价体系', path: '/government/industry/credit' },
       { key: 'training', label: '行业培训考核', path: '/government/industry/training' },
@@ -133,10 +135,24 @@ export const propertyMenus: MenuItem[] = [
     path: '/property/dashboard'
   },
   {
-    key: 'enterprise',
-    label: '企业入驻',
-    icon: 'BankOutlined',
-    path: '/property/company/register'
+    key: 'asset',
+    label: '资产管理',
+    icon: 'HomeOutlined',
+    children: [
+      { key: 'asset-overview', label: '资产总览', path: '/property/asset/overview' },
+      { key: 'building', label: '楼栋管理', path: '/property/asset/building' },
+      { key: 'house', label: '房屋管理', path: '/property/asset/house' },
+      { key: 'parking', label: '车位管理', path: '/property/asset/parking' },
+      { key: 'data-sync', label: '数据同步', path: '/property/asset/sync' },
+    ]
+  },
+  {
+    key: 'owner',
+    label: '业主管理',
+    icon: 'TeamOutlined',
+    children: [
+      { key: 'owner-archive', label: '业主档案', path: '/property/owner/archive' },
+    ]
   },
   {
     key: 'merchant',
@@ -153,6 +169,7 @@ export const propertyMenus: MenuItem[] = [
     children: [
       { key: 'staff-list', label: '账号管理', path: '/property/staff/list' },
       { key: 'role-mgmt', label: '角色管理', path: '/property/roles' },
+      { key: 'prop-organization', label: '组织架构管理', path: '/property/organization' },
     ]
   },
   {
@@ -188,13 +205,15 @@ export const propertyMenus: MenuItem[] = [
   },
   {
     key: 'finance',
-    label: '财务管理',
+    label: '收费管理',
     icon: 'DollarOutlined',
     children: [
-      { key: 'property-fee', label: '物业费管理', path: '/property/finance/fee' },
-      { key: 'parking-fee', label: '停车费管理', path: '/property/finance/parking' },
-      { key: 'repair-fund', label: '维修资金', path: '/property/finance/repair-fund' },
-      { key: 'report', label: '财务报表', path: '/property/finance/report' },
+      { key: 'fee-items', label: '费用项目管理', path: '/property/finance/fee-items' },
+      { key: 'charge-rules', label: '收费标准设置', path: '/property/finance/charge-rules' },
+      { key: 'bills', label: '账单管理', path: '/property/finance/bills' },
+      { key: 'payments', label: '缴费管理', path: '/property/finance/payments' },
+      { key: 'collection', label: '催缴管理', path: '/property/finance/collection' },
+      { key: 'reports', label: '收费报表', path: '/property/finance/reports' },
     ]
   },
   {
@@ -274,6 +293,7 @@ export const merchantMenus: MenuItem[] = [
     children: [
       { key: 'mcht-staff-list', label: '账号管理', path: '/merchant/staff/list' },
       { key: 'mcht-role-mgmt', label: '角色管理', path: '/merchant/roles' },
+      { key: 'mcht-organization', label: '组织架构管理', path: '/merchant/organization' },
     ]
   },
   {

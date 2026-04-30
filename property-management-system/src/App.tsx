@@ -4,6 +4,7 @@ import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import router from './router';
 import { AuthProvider } from './contexts/AuthContext';
+import { CommunityProvider } from './contexts/CommunityContext';
 
 const App: React.FC = () => {
   return (
@@ -17,7 +18,9 @@ const App: React.FC = () => {
       }}
     >
       <AuthProvider>
-        <RouterProvider router={router} />
+        <CommunityProvider>
+          <RouterProvider router={router} />
+        </CommunityProvider>
       </AuthProvider>
     </ConfigProvider>
   );

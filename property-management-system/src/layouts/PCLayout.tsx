@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Breadcrumb, theme } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Breadcrumb, theme, Select, Space, message, Modal } from 'antd';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -7,9 +7,13 @@ import {
   LogoutOutlined,
   BellOutlined,
   SettingOutlined,
+  HomeOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import type { MenuProps } from 'antd';
+import { useCommunity } from '../contexts/CommunityContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const { Header, Sider, Content } = Layout;
 
@@ -17,13 +21,17 @@ interface PCLayoutProps {
   menuItems: MenuProps['items'];
   title: string;
   subTitle?: string;
+  /** 是否显示小区切换器（物业管理端专用） */
+  showCommunitySwitcher?: boolean;
 }
 
-const PCLayout: React.FC<PCLayoutProps> = ({ menuItems, title, subTitle }) => {
+const PCLayout: React.FC<PCLayoutProps> = ({ menuItems, title, subTitle, showCommunitySwitcher }) => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { token: { colorBgContainer, borderRadiusLG } } = theme.useToken();
+  const { currentCommunity, communityList, switchCommunity } = useCommunity();
+  const { currentUser, logout } = useAuth();
 
   // 设置浏览器窗口标题
   useEffect(() => {
@@ -34,11 +42,40 @@ const PCLayout: React.FC<PCLayoutProps> = ({ menuItems, title, subTitle }) => {
     navigate(key);
   };
 
+  // 退出登录
+  const handleLogout = () => {
+    Modal.confirm({
+      title: '确认退出',
+      icon: <ExclamationCircleOutlined />,
+      content: '确定要退出登录吗？',
+      okText: '确认退出',
+      cancelText: '取消',
+      onOk: async () => {
+        await logout();
+        message.success('已退出登录');
+        // 获取当前路径对应的端口
+        const port = location.pathname.split('/')[1] || 'property';
+        navigate(`/login?port=${port}`, { replace: true });
+      },
+    });
+  };
+
+  // 用户下拉菜单点击处理
+  const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
+    if (key === 'logout') {
+      handleLogout();
+    } else if (key === 'profile') {
+      message.info('个人中心 - 开发中');
+    } else if (key === 'settings') {
+      message.info('系统设置 - 开发中');
+    }
+  };
+
   const userMenuItems = [
     { key: 'profile', icon: <UserOutlined />, label: '个人中心' },
     { key: 'settings', icon: <SettingOutlined />, label: '系统设置' },
     { type: 'divider' as const },
-    { key: 'logout', icon: <LogoutOutlined />, label: '退出登录' },
+    { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', danger: true },
   ];
 
   // 生成面包屑
@@ -69,6 +106,13 @@ const PCLayout: React.FC<PCLayoutProps> = ({ menuItems, title, subTitle }) => {
       'order': '订单管理',
       'marketing': '营销活动',
       'customer': '客户管理',
+      'asset': '资产管理',
+      'building': '楼栋管理',
+      'house': '房屋管理',
+      'owner': '业主管理',
+      'binding': '业主绑定',
+      'parking': '车位管理',
+      'sync': '数据同步',
     };
     return { title: nameMap[pathSnippets[index]] || pathSnippets[index] };
   });
@@ -117,11 +161,30 @@ const PCLayout: React.FC<PCLayoutProps> = ({ menuItems, title, subTitle }) => {
             <span style={{ fontSize: 16, fontWeight: 500 }}>{subTitle || title}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {showCommunitySwitcher && communityList.length > 0 && (
+              <Select
+                value={currentCommunity?.id}
+                onChange={(value) => {
+                  const community = communityList.find(c => c.id === value);
+                  if (community) switchCommunity(community);
+                }}
+                style={{ width: 180 }}
+                options={communityList.map(c => ({
+                  value: c.id,
+                  label: (
+                    <Space>
+                      <HomeOutlined />
+                      <span>{c.name}</span>
+                    </Space>
+                  ),
+                }))}
+              />
+            )}
             <BellOutlined style={{ fontSize: 18, cursor: 'pointer' }} />
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+            <Dropdown menu={{ items: userMenuItems, onClick: handleUserMenuClick }} placement="bottomRight">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                 <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1890ff' }} />
-                <span>管理员</span>
+                <span>{currentUser?.user?.phone || '管理员'}</span>
               </div>
             </Dropdown>
           </div>
