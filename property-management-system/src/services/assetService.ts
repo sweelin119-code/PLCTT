@@ -11,6 +11,8 @@ import type {
   AssetStatistics,
   BuildingStatistics,
   DataSource,
+  OwnerAccount,
+  AccountTransaction,
 } from './assetTypes';
 
 // ===== 模拟延迟 =====
@@ -171,6 +173,24 @@ let nextOwnerId = 11;
 let nextHouseOwnerId = 11;
 let nextChangeLogId = 3;
 let nextParkingId = 11;
+let nextAccountId = 4;
+let nextTxId = 6;
+
+// ===== Mock 业主账户数据 =====
+let mockAccounts: OwnerAccount[] = [
+  { id: 1, projectId: 20, ownerId: 1, ownerName: '张建国', ownerPhone: '13800138001', balance: 50000, totalRecharge: 100000, totalPayment: 50000, freezeAmount: 0, status: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-04-01 10:00:00' },
+  { id: 2, projectId: 20, ownerId: 2, ownerName: '李秀芳', ownerPhone: '13800138002', balance: 20000, totalRecharge: 50000, totalPayment: 30000, freezeAmount: 0, status: true, createTime: '2026-01-15 09:00:00', updateTime: '2026-03-20 14:00:00' },
+  { id: 3, projectId: 21, ownerId: 8, ownerName: '吴建国', ownerPhone: '13900139001', balance: 0, totalRecharge: 0, totalPayment: 0, freezeAmount: 0, status: true, createTime: '2026-02-01 08:00:00', updateTime: '2026-02-01 08:00:00' },
+];
+
+// ===== Mock 交易记录 =====
+let mockTransactions: AccountTransaction[] = [
+  { id: 1, accountId: 1, ownerId: 1, projectId: 20, transactionType: 'recharge', amount: 100000, balanceBefore: 0, balanceAfter: 100000, status: 'success', remark: '前台现金充值', operatorName: '系统管理员', createTime: '2026-03-01 10:00:00' },
+  { id: 2, accountId: 1, ownerId: 1, projectId: 20, transactionType: 'payment', amount: -30000, balanceBefore: 100000, balanceAfter: 70000, status: 'success', remark: '缴纳物业费-2026年第一季度', relatedBillId: 1, operatorName: '系统管理员', createTime: '2026-03-15 09:00:00' },
+  { id: 3, accountId: 1, ownerId: 1, projectId: 20, transactionType: 'payment', amount: -20000, balanceBefore: 70000, balanceAfter: 50000, status: 'success', remark: '缴纳停车费-2026年3月', relatedBillId: 2, operatorName: '系统管理员', createTime: '2026-03-15 09:00:00' },
+  { id: 4, accountId: 2, ownerId: 2, projectId: 20, transactionType: 'recharge', amount: 50000, balanceBefore: 0, balanceAfter: 50000, status: 'success', remark: '线上充值', operatorName: '李秀芳', createTime: '2026-03-20 14:00:00' },
+  { id: 5, accountId: 2, ownerId: 2, projectId: 20, transactionType: 'payment', amount: -30000, balanceBefore: 50000, balanceAfter: 20000, status: 'success', remark: '缴纳物业费-2026年第一季度', relatedBillId: 3, operatorName: '系统管理员', createTime: '2026-03-20 14:30:00' },
+];
 
 // ====================================================================
 // 楼栋 API
@@ -493,6 +513,24 @@ export async function createOwner(data: Omit<Owner, 'id' | 'createTime' | 'updat
     updateTime: now,
   };
   mockOwners.push(newOwner);
+
+  // 自动为该业主创建业主账户
+  const newAccount: OwnerAccount = {
+    id: nextAccountId++,
+    projectId: newOwner.projectId,
+    ownerId: newOwner.id,
+    ownerName: newOwner.name,
+    ownerPhone: newOwner.phone,
+    balance: 0,
+    totalRecharge: 0,
+    totalPayment: 0,
+    freezeAmount: 0,
+    status: true,
+    createTime: now,
+    updateTime: now,
+  };
+  mockAccounts.push(newAccount);
+
   return newOwner;
 }
 
@@ -812,6 +850,60 @@ export async function triggerSync(projectId: number, syncTypes: string[]): Promi
 // ====================================================================
 // 标签 API（业主标签管理）
 // ====================================================================
+
+// ====================================================================
+// 业主账户 API
+// ====================================================================
+
+export async function getOwnerAccounts(projectId: number): Promise<OwnerAccount[]> {
+  await delay();
+  return mockAccounts.filter(a => a.projectId === projectId);
+}
+
+export async function getOwnerAccountByOwnerId(ownerId: number): Promise<OwnerAccount | null> {
+  await delay();
+  return mockAccounts.find(a => a.ownerId === ownerId) || null;
+}
+
+export async function rechargeOwnerAccount(
+  accountId: number,
+  amount: number,
+  remark?: string
+): Promise<OwnerAccount | null> {
+  await delay();
+  const index = mockAccounts.findIndex(a => a.id === accountId);
+  if (index === -1) return null;
+  const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  const account = mockAccounts[index];
+  mockAccounts[index] = {
+    ...account,
+    balance: account.balance + amount,
+    totalRecharge: account.totalRecharge + amount,
+    updateTime: now,
+  };
+  // 添加交易记录
+  const newTx: AccountTransaction = {
+    id: nextTxId++,
+    accountId: account.id,
+    ownerId: account.ownerId,
+    projectId: account.projectId,
+    transactionType: 'recharge',
+    amount,
+    balanceBefore: account.balance,
+    balanceAfter: account.balance + amount,
+    status: 'success',
+    remark: remark || '前台充值',
+    operatorName: '系统管理员',
+    createTime: now,
+  };
+  mockTransactions.push(newTx);
+  return mockAccounts[index];
+}
+
+export async function getAccountTransactions(accountId: number): Promise<AccountTransaction[]> {
+  await delay();
+  return mockTransactions.filter(t => t.accountId === accountId);
+}
 
 export async function getAllOwnerTags(projectId: number): Promise<string[]> {
   await delay();

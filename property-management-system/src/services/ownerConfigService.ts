@@ -58,7 +58,7 @@ const defaultBanners: OwnerBannerConfig[] = [
 
 const defaultQuickMenus: OwnerQuickMenuConfig[] = [
   { id: 1, label: '报修', icon: '🔧', path: '/owner/repair', sortOrder: 1, enabled: true, color: '#007AFF', bg: '#EBF5FF' },
-  { id: 2, label: '缴费', icon: '💳', path: '/owner/payment', sortOrder: 2, enabled: true, color: '#34C759', bg: '#EBFFEB' },
+  { id: 2, label: '我的账单', icon: '💳', path: '/owner/bills', sortOrder: 2, enabled: true, color: '#34C759', bg: '#EBFFEB' },
   { id: 3, label: '停车', icon: '🚗', path: '/owner/parking', sortOrder: 3, enabled: true, color: '#FF9500', bg: '#FFF5EB' },
   { id: 4, label: '门禁', icon: '🔑', path: '/owner/access', sortOrder: 4, enabled: true, color: '#AF52DE', bg: '#F5EBFF' },
   { id: 5, label: '投诉', icon: '💡', path: '/owner/complaint', sortOrder: 5, enabled: true, color: '#FF3B30', bg: '#FFEBEB' },
@@ -70,31 +70,35 @@ const defaultQuickMenus: OwnerQuickMenuConfig[] = [
 const defaultServiceCategories: OwnerServiceCategoryConfig[] = [
   { id: 1, title: '物业服务', emoji: '🏠', color: '#007AFF', bg: '#EBF5FF', sortOrder: 1, enabled: true },
   { id: 2, title: '生活服务', emoji: '🛍️', color: '#FF9500', bg: '#FFF5EB', sortOrder: 2, enabled: true },
-  { id: 3, title: '社区互动', emoji: '💬', color: '#AF52DE', bg: '#F5EBFF', sortOrder: 3, enabled: true },
+  { id: 3, title: '社区社交', emoji: '💬', color: '#AF52DE', bg: '#F5EBFF', sortOrder: 3, enabled: true },
+  { id: 4, title: '社区集市', emoji: '🏪', color: '#FF2D55', bg: '#FFEBF0', sortOrder: 4, enabled: true },
+  { id: 5, title: '便民服务', emoji: '🛠️', color: '#5856D6', bg: '#F0EBFF', sortOrder: 5, enabled: true },
 ];
 
 const defaultServices: OwnerServiceConfig[] = [
-  // 物业服务
+  // 物业服务（物业相关服务）
   { id: 1, categoryId: 1, icon: '🔧', label: '在线报修', path: '/owner/repair', desc: '水、电、门窗等维修', sortOrder: 1, enabled: true, relatedMineMenus: ['/owner/mine/repairs'] },
-  { id: 2, categoryId: 1, icon: '💳', label: '物业缴费', path: '/owner/payment', desc: '物业费、水电费缴纳', sortOrder: 2, enabled: true, relatedMineMenus: ['/owner/mine/payments'] },
+  { id: 2, categoryId: 1, icon: '💳', label: '我的账单', path: '/owner/bills', desc: '物业费、水电费、停车费缴纳', sortOrder: 2, enabled: true, relatedMineMenus: ['/owner/mine/payments'] },
   { id: 3, categoryId: 1, icon: '🚗', label: '停车服务', path: '/owner/parking', desc: '车位查询、租赁', sortOrder: 3, enabled: true, relatedMineMenus: [] },
   { id: 4, categoryId: 1, icon: '🔑', label: '门禁管理', path: '/owner/access', desc: '手机开门、访客授权', sortOrder: 4, enabled: true, relatedMineMenus: [] },
   { id: 5, categoryId: 1, icon: '📦', label: '快递服务', path: '/owner/express', desc: '快递代收查询', sortOrder: 5, enabled: true, relatedMineMenus: ['/owner/mine/expresses'] },
   { id: 6, categoryId: 1, icon: '📋', label: '装修申请', path: '/owner/decoration', desc: '装修备案申请', sortOrder: 6, enabled: true, relatedMineMenus: [] },
-  // 生活服务
-  { id: 7, categoryId: 2, icon: '🧹', label: '家政保洁', path: '/owner/services/housekeeping', desc: '日常保洁、深度清洁', sortOrder: 1, enabled: true, relatedMineMenus: [] },
-  { id: 8, categoryId: 2, icon: '🔌', label: '家电维修', path: '/owner/services/appliance', desc: '空调、冰箱等维修', sortOrder: 2, enabled: true, relatedMineMenus: [] },
-  { id: 9, categoryId: 2, icon: '🛒', label: '社区团购', path: '/owner/services/groupbuy', desc: '生鲜、日用品团购', sortOrder: 3, enabled: true, relatedMineMenus: ['/owner/mine/coupons'] },
-  { id: 10, categoryId: 2, icon: '🚚', label: '搬家服务', path: '/owner/services/moving', desc: '搬家公司预约', sortOrder: 4, enabled: true, relatedMineMenus: [] },
-  { id: 11, categoryId: 2, icon: '🌿', label: '绿化服务', path: '/owner/services/greening', desc: '绿植养护、修剪', sortOrder: 5, enabled: true, relatedMineMenus: [] },
-  { id: 12, categoryId: 2, icon: '👶', label: '家政月嫂', path: '/owner/services/nanny', desc: '月嫂、育儿嫂', sortOrder: 6, enabled: true, relatedMineMenus: [] },
-  // 社区互动
-  { id: 13, categoryId: 3, icon: '📢', label: '社区公告', path: '/owner/notice', desc: '查看最新通知', sortOrder: 1, enabled: true, relatedMineMenus: [] },
-  { id: 14, categoryId: 3, icon: '🗳️', label: '投票表决', path: '/owner/vote', desc: '业主大会投票', sortOrder: 2, enabled: true, relatedMineMenus: ['/owner/mine/votes'] },
-  { id: 15, categoryId: 3, icon: '💡', label: '投诉建议', path: '/owner/complaint', desc: '意见反馈', sortOrder: 3, enabled: true, relatedMineMenus: ['/owner/mine/complaints'] },
-  { id: 16, categoryId: 3, icon: '🤝', label: '邻里互助', path: '/owner/community', desc: '邻里交流平台', sortOrder: 4, enabled: true, relatedMineMenus: [] },
-  { id: 17, categoryId: 3, icon: '🎪', label: '社区活动', path: '/owner/activities', desc: '活动报名参与', sortOrder: 5, enabled: true, relatedMineMenus: ['/owner/mine/activities'] },
-  { id: 18, categoryId: 3, icon: '🏪', label: '周边商家', path: '/owner/shops', desc: '社区商家服务', sortOrder: 6, enabled: true, relatedMineMenus: [] },
+  // 生活服务（第三方商业服务）
+  { id: 7, categoryId: 2, icon: '🏪', label: '周边商家', path: '/owner/shops', desc: '社区商家查询', sortOrder: 1, enabled: true, relatedMineMenus: [] },
+  { id: 8, categoryId: 2, icon: '🛒', label: '在线购物', path: '/owner/services/online-shopping', desc: '商品在线购买', sortOrder: 2, enabled: true, relatedMineMenus: [] },
+  { id: 9, categoryId: 2, icon: '🍱', label: '外卖服务', path: '/owner/services/delivery', desc: '餐饮外卖配送', sortOrder: 3, enabled: true, relatedMineMenus: [] },
+  { id: 10, categoryId: 2, icon: '🧹', label: '家政服务预约', path: '/owner/services/housekeeping', desc: '保洁、月嫂等预约', sortOrder: 4, enabled: true, relatedMineMenus: [] },
+  { id: 11, categoryId: 2, icon: '💧', label: '生活缴费', path: '/owner/services/utilities', desc: '水电气等生活缴费', sortOrder: 5, enabled: true, relatedMineMenus: [] },
+  // 社区社交
+  { id: 12, categoryId: 3, icon: '📢', label: '社区公告', path: '/owner/notice', desc: '查看最新通知', sortOrder: 1, enabled: true, relatedMineMenus: [] },
+  { id: 13, categoryId: 3, icon: '🎪', label: '社区活动', path: '/owner/activities', desc: '活动报名参与', sortOrder: 2, enabled: true, relatedMineMenus: ['/owner/mine/activities'] },
+  { id: 14, categoryId: 3, icon: '💬', label: '邻里圈', path: '/owner/neighborhood', desc: '社区论坛交流', sortOrder: 3, enabled: true, relatedMineMenus: [] },
+  { id: 15, categoryId: 3, icon: '🤝', label: '邻里互助', path: '/owner/community', desc: '邻里交流平台', sortOrder: 4, enabled: true, relatedMineMenus: [] },
+  // 社区集市
+  { id: 16, categoryId: 4, icon: '🔄', label: '二手交易', path: '/owner/market/used', desc: '闲置物品交易', sortOrder: 1, enabled: true, relatedMineMenus: [] },
+  { id: 17, categoryId: 4, icon: '👥', label: '社区拼团', path: '/owner/market/groupbuy', desc: '生鲜、日用品团购', sortOrder: 2, enabled: true, relatedMineMenus: ['/owner/mine/coupons'] },
+  // 便民服务
+  { id: 18, categoryId: 5, icon: '🔍', label: '失物招领', path: '/owner/services/lost-found', desc: '失物发布与认领', sortOrder: 1, enabled: true, relatedMineMenus: [] },
 ];
 
 // ===== 运行时配置状态（模拟数据库） =====

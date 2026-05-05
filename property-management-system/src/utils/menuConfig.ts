@@ -8,6 +8,133 @@ export interface MenuItem {
   path?: string;
 }
 
+// localStorage 存储键名（与 PortConfig.tsx 保持一致）
+const STORAGE_KEY = 'plcct_port_config';
+
+interface PortConfigData {
+  ports: Array<{
+    key: string;
+    name: string;
+    icon: string;
+    color: string;
+    enabled: boolean;
+    sortOrder: number;
+    menus: MenuItem[];
+  }>;
+  menuVisibility: {
+    [portKey: string]: {
+      [menuKey: string]: boolean;
+    };
+  };
+  menuLabels: {
+    [portKey: string]: {
+      [menuKey: string]: string;
+    };
+  };
+}
+
+/**
+ * 将默认菜单中新增的菜单项合并到已保存的菜单配置中
+ * 确保代码新增的菜单项在已保存的 localStorage 配置中也能显示
+ */
+export function mergeDefaultMenus(savedMenus: MenuItem[], defaultMenus: MenuItem[]): MenuItem[] {
+  return defaultMenus.map(defaultItem => {
+    const itemKey = defaultItem.path || defaultItem.key;
+    const savedItem = savedMenus.find(m => (m.path || m.key) === itemKey);
+    
+    if (!savedItem) {
+      // 这是新增的菜单项，直接使用默认值
+      return JSON.parse(JSON.stringify(defaultItem));
+    }
+    
+    // 保留已保存的标签（自定义名称）
+    const merged: MenuItem = {
+      ...defaultItem,
+      label: savedItem.label,
+    };
+    
+    // 递归合并子菜单
+    if (defaultItem.children && savedItem.children) {
+      merged.children = mergeDefaultMenus(savedItem.children, defaultItem.children);
+    } else if (defaultItem.children) {
+      merged.children = JSON.parse(JSON.stringify(defaultItem.children));
+    } else {
+      merged.children = savedItem.children;
+    }
+    
+    return merged;
+  });
+}
+
+/**
+ * 从超级管理端的端口配置中获取指定端口的动态菜单
+ * 如果未配置或读取失败，则返回默认菜单
+ */
+export function getPortMenus(portType: string): MenuItem[] {
+  // 获取默认菜单
+  const defaultMenus = getDefaultMenus(portType);
+  
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return defaultMenus;
+    
+    const config: PortConfigData = JSON.parse(saved);
+    
+    // 从配置中获取该端口的菜单结构（包含自定义排序）
+    const portConfig = config.ports?.find(p => p.key === portType);
+    if (!portConfig || !portConfig.menus || portConfig.menus.length === 0) {
+      return defaultMenus;
+    }
+    
+    // 将已保存的菜单与默认菜单合并，确保新增菜单项也能显示
+    const mergedMenus = mergeDefaultMenus(portConfig.menus, defaultMenus);
+    
+    const visibility = config.menuVisibility?.[portType] || {};
+    const labels = config.menuLabels?.[portType] || {};
+    
+    // 递归处理菜单：应用自定义名称、过滤隐藏项
+    const processMenus = (items: MenuItem[]): MenuItem[] => {
+      return items
+        .filter(item => {
+          const visKey = item.path || item.key;
+          return visibility[visKey] !== false; // 默认可见
+        })
+        .map(item => {
+          const visKey = item.path || item.key;
+          const newItem: MenuItem = {
+            ...item,
+            label: labels[visKey] || item.label,
+          };
+          if (item.children) {
+            newItem.children = processMenus(item.children);
+            // 如果子菜单全部被隐藏，父菜单也隐藏
+            if (newItem.children.length === 0) {
+              return null;
+            }
+          }
+          return newItem;
+        })
+        .filter(Boolean) as MenuItem[];
+    };
+    
+    return processMenus(mergedMenus);
+  } catch {
+    return defaultMenus;
+  }
+}
+
+/**
+ * 获取指定端口的默认菜单
+ */
+function getDefaultMenus(portType: string): MenuItem[] {
+  switch (portType) {
+    case 'government': return governmentMenus;
+    case 'property': return propertyMenus;
+    case 'merchant': return merchantMenus;
+    default: return [];
+  }
+}
+
 // 政府监管端菜单
 export const governmentMenus: MenuItem[] = [
   {
@@ -152,6 +279,8 @@ export const propertyMenus: MenuItem[] = [
     icon: 'TeamOutlined',
     children: [
       { key: 'owner-archive', label: '业主档案', path: '/property/owner/archive' },
+      { key: 'owner-members', label: '业主成员', path: '/property/owner/members' },
+      { key: 'owner-accounts', label: '业主账户', path: '/property/owner/accounts' },
     ]
   },
   {
@@ -178,7 +307,7 @@ export const propertyMenus: MenuItem[] = [
     icon: 'ScheduleOutlined',
     children: [
       { key: 'todo', label: '待办事项', path: '/property/daily/todo' },
-      { key: 'schedule', label: '值班排班', path: '/property/daily/schedule' },
+      { key: 'schedule', label: '值班管理', path: '/property/daily/schedule' },
       { key: 'notice', label: '通知公告', path: '/property/daily/notice' },
       { key: 'document', label: '内部文件', path: '/property/daily/document' },
     ]
@@ -247,7 +376,7 @@ export const propertyMenus: MenuItem[] = [
   },
   {
     key: 'workorder',
-    label: '维修工单',
+    label: '报事报修管理',
     icon: 'FileTextOutlined',
     children: [
       { key: 'prop-workorder-list', label: '工单管理', path: '/property/workorder/list' },
@@ -256,7 +385,7 @@ export const propertyMenus: MenuItem[] = [
   },
   {
     key: 'contract',
-    label: '合同管理',
+    label: '采购/服务合同',
     icon: 'FileProtectOutlined',
     path: '/property/contract'
   },
@@ -265,6 +394,55 @@ export const propertyMenus: MenuItem[] = [
     label: '品质管理',
     icon: 'StarOutlined',
     path: '/property/quality'
+  },
+  // 保安管理
+  {
+    key: 'security-guard',
+    label: '保安管理',
+    icon: 'SafetyOutlined',
+    children: [
+      { key: 'guard-patrol', label: '巡逻管理', path: '/property/security-guard/patrol' },
+      { key: 'guard-monitor', label: '安全监控', path: '/property/security-guard/monitor' },
+      { key: 'guard-visitor', label: '访客登记', path: '/property/security-guard/visitor' },
+      { key: 'guard-parking', label: '停车收费执行', path: '/property/security-guard/parking' },
+      { key: 'guard-intercom', label: '对讲系统使用', path: '/property/security-guard/intercom' },
+    ]
+  },
+  // 保洁管理
+  {
+    key: 'cleaning',
+    label: '保洁管理',
+    icon: 'CustomerServiceOutlined',
+    children: [
+      { key: 'clean-plan', label: '清洁计划', path: '/property/cleaning/plan' },
+      { key: 'clean-execute', label: '清洁执行', path: '/property/cleaning/execute' },
+      { key: 'clean-garbage', label: '垃圾处理', path: '/property/cleaning/garbage' },
+      { key: 'clean-disinfect', label: '消杀管理', path: '/property/cleaning/disinfect' },
+    ]
+  },
+  // 维保管理
+  {
+    key: 'maintenance',
+    label: '维保管理',
+    icon: 'ToolOutlined',
+    children: [
+      { key: 'maint-equip', label: '设备维护', path: '/property/maintenance/equipment' },
+      { key: 'maint-inspect', label: '巡检管理', path: '/property/maintenance/inspect' },
+      { key: 'maint-parts', label: '备件管理', path: '/property/maintenance/parts' },
+      { key: 'maint-special', label: '专项维修', path: '/property/maintenance/special' },
+    ]
+  },
+  // 绿化管理
+  {
+    key: 'greening',
+    label: '绿化管理',
+    icon: 'BulbOutlined',
+    children: [
+      { key: 'green-plan', label: '绿化养护计划', path: '/property/greening/plan' },
+      { key: 'green-execute', label: '绿化养护执行', path: '/property/greening/execute' },
+      { key: 'green-inspect', label: '绿化巡检', path: '/property/greening/inspect' },
+      { key: 'green-quality', label: '绿化质量评估', path: '/property/greening/quality' },
+    ]
   },
   {
     key: 'owner-config',
