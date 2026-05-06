@@ -36,6 +36,7 @@ import VehicleRecords from '../pages/owner/VehicleRecords';
 import ParkingRent from '../pages/owner/ParkingRent';
 import ParkingShare from '../pages/owner/ParkingShare';
 import OwnerVotePage from '../pages/owner/VotePage';
+import AssemblyResolution from '../pages/property/AssemblyResolution';
 
 // 门户页
 import PortalPage from '../pages/portal/PortalPage';
@@ -352,6 +353,7 @@ const router = createBrowserRouter([
       { path: 'daily/schedule', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>值班排班 - 开发中</div> },
       { path: 'daily/notice', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>通知公告 - 开发中</div> },
       { path: 'daily/document', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>内部文件 - 开发中</div> },
+      { path: 'daily/assembly-resolution', element: <AssemblyResolution /> },
 
       // 员工管理（原人员管理改名）
       { path: 'staff/archive', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>员工档案 - 开发中</div> },

@@ -664,6 +664,15 @@ export async function publishAssemblyResult(id: string): Promise<void> {
   await delay();
 }
 
+/**
+ * 获取已发布结果的业主大会（供物业端查看）
+ * 只返回 status === 'ended' 且 result?.published === true 的大会
+ */
+export async function getPublishedAssemblies(): Promise<GeneralAssembly[]> {
+  await delay();
+  return mockAssemblies.filter(a => a.status === 'ended' && a.result?.published);
+}
+
 // ---- 维修资金审核 ----
 
 export async function getFundApplications(): Promise<MaintenanceFundApplication[]> {

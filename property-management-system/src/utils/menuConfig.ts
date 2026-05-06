@@ -365,6 +365,7 @@ export const propertyMenus: MenuItem[] = [
       { key: 'schedule', label: '值班管理', path: '/property/daily/schedule' },
       { key: 'notice', label: '通知公告', path: '/property/daily/notice' },
       { key: 'document', label: '内部文件', path: '/property/daily/document' },
+      { key: 'assembly-resolution', label: '业主大会决议', path: '/property/daily/assembly-resolution' },
     ]
   },
   // 10. 员工管理（原人员管理改名）
