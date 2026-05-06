@@ -26,25 +26,29 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   placeholder = '请输入正文内容...',
   height = 400,
 }) => {
+  const editorContainerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const quillRef = useRef<Quill | null>(null);
   const isInternalChange = useRef(false);
+  const initialized = useRef(false);
 
   const handleTextChange = useCallback(() => {
     if (!quillRef.current) return;
     isInternalChange.current = true;
     const html = quillRef.current.root.innerHTML;
     onChange?.(html === '<p><br></p>' ? '' : html);
-    // 延迟重置标志，避免 useEffect 回写
     setTimeout(() => {
       isInternalChange.current = false;
     }, 0);
   }, [onChange]);
 
   useEffect(() => {
-    if (!editorRef.current || quillRef.current) return;
+    if (!editorRef.current || initialized.current) return;
+    initialized.current = true;
 
-    const quill = new Quill(editorRef.current, {
+    // 确保容器有明确的 id 用于 toolbar 绑定
+    const container = editorRef.current;
+    const quill = new Quill(container, {
       theme: 'snow',
       modules: {
         toolbar: TOOLBAR_OPTIONS,
@@ -55,7 +59,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     quill.on('text-change', handleTextChange);
     quillRef.current = quill;
 
-    // 设置初始值
     if (value) {
       quill.root.innerHTML = value;
     }
@@ -63,6 +66,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     return () => {
       quill.off('text-change', handleTextChange);
       quillRef.current = null;
+      initialized.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -71,7 +75,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   useEffect(() => {
     const quill = quillRef.current;
     if (!quill) return;
-    // 如果是内部触发的 change，跳过回写
     if (isInternalChange.current) return;
 
     const currentHtml = quill.root.innerHTML;
@@ -84,7 +87,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   }, [value]);
 
   return (
-    <div>
+    <div ref={editorContainerRef}>
       <div ref={editorRef} style={{ height }} />
     </div>
   );

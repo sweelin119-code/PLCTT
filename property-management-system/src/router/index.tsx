@@ -37,6 +37,11 @@ import ParkingRent from '../pages/owner/ParkingRent';
 import ParkingShare from '../pages/owner/ParkingShare';
 import OwnerVotePage from '../pages/owner/VotePage';
 import AssemblyResolution from '../pages/property/AssemblyResolution';
+import NoticeManage from '../pages/property/NoticeManage';
+
+import ScheduleManage from '../pages/property/ScheduleManage';
+import TodoManage from '../pages/property/TodoManage';
+import DocumentManage from '../pages/property/DocumentManage';
 
 // 门户页
 import PortalPage from '../pages/portal/PortalPage';
@@ -349,10 +354,11 @@ const router = createBrowserRouter([
       { path: 'device/energy', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>能耗管理 - 开发中</div> },
 
       // 日常管理
-      { path: 'daily/todo', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>待办事项 - 开发中</div> },
-      { path: 'daily/schedule', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>值班排班 - 开发中</div> },
-      { path: 'daily/notice', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>通知公告 - 开发中</div> },
-      { path: 'daily/document', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>内部文件 - 开发中</div> },
+      { path: 'daily/todo', element: <TodoManage /> },
+      { path: 'daily/schedule', element: <ScheduleManage /> },
+      { path: 'daily/notice', element: <NoticeManage /> },
+
+      { path: 'daily/document', element: <DocumentManage /> },
       { path: 'daily/assembly-resolution', element: <AssemblyResolution /> },
 
       // 员工管理（原人员管理改名）
