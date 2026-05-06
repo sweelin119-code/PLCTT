@@ -35,6 +35,7 @@ import MyParking from '../pages/owner/MyParking';
 import VehicleRecords from '../pages/owner/VehicleRecords';
 import ParkingRent from '../pages/owner/ParkingRent';
 import ParkingShare from '../pages/owner/ParkingShare';
+import OwnerVotePage from '../pages/owner/VotePage';
 
 // 门户页
 import PortalPage from '../pages/portal/PortalPage';
@@ -548,7 +549,7 @@ const router = createBrowserRouter([
       { path: 'complaint', element: <OwnerComplaint /> },
       { path: 'express', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>快递服务 - 开发中</div> },
       { path: 'decoration', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>装修申请 - 开发中</div> },
-      { path: 'vote', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>投票表决 - 开发中</div> },
+      { path: 'vote', element: <OwnerVotePage /> },
       { path: 'community', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>邻里互助 - 开发中</div> },
       { path: 'activities', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>社区活动 - 开发中</div> },
       { path: 'shops', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>周边商家 - 开发中</div> },

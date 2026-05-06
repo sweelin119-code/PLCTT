@@ -25,8 +25,9 @@ const TabBar: React.FC = () => {
       const lastTab = remainingTabs[remainingTabs.length - 1];
       navigate(lastTab.key);
     } else if (remainingTabs.length === 0) {
-      // 如果没有标签页了，导航到首页
-      navigate('/property/dashboard');
+      // 如果没有标签页了，根据当前端口导航到对应的工作台
+      const port = location.pathname.split('/')[1] || 'property';
+      navigate(`/${port}/dashboard`);
     }
   };
 

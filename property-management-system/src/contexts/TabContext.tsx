@@ -31,10 +31,8 @@ export const useTabs = () => useContext(TabContext);
 
 export const TabProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const [tabs, setTabs] = useState<TabItem[]>([
-    { key: '/property/dashboard', label: '工作台', closable: false },
-  ]);
-  const [activeKey, setActiveKey] = useState<string>('/property/dashboard');
+  const [tabs, setTabs] = useState<TabItem[]>([]);
+  const [activeKey, setActiveKey] = useState<string>('');
 
   // 当路由变化时，同步激活的标签页
   useEffect(() => {

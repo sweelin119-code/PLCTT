@@ -62,9 +62,10 @@ const defaultQuickMenus: OwnerQuickMenuConfig[] = [
   { id: 3, label: '停车', icon: '🚗', path: '/owner/parking', sortOrder: 3, enabled: true, color: '#FF9500', bg: '#FFF5EB' },
   { id: 4, label: '门禁', icon: '🔑', path: '/owner/access', sortOrder: 4, enabled: true, color: '#AF52DE', bg: '#F5EBFF' },
   { id: 5, label: '投诉', icon: '💡', path: '/owner/complaint', sortOrder: 5, enabled: true, color: '#FF3B30', bg: '#FFEBEB' },
-  { id: 6, label: '快递', icon: '📦', path: '/owner/express', sortOrder: 6, enabled: true, color: '#5AC8FA', bg: '#EBF8FF' },
-  { id: 7, label: '社区活动', icon: '🎪', path: '/owner/activities', sortOrder: 7, enabled: true, color: '#FF2D55', bg: '#FFEBF0' },
-  { id: 8, label: '邻里圈', icon: '🤝', path: '/owner/neighborhood', sortOrder: 8, enabled: true, color: '#5856D6', bg: '#F0EBFF' },
+  { id: 6, label: '投票表决', icon: '📋', path: '/owner/vote', sortOrder: 6, enabled: true, color: '#1677ff', bg: '#EBF5FF' },
+  { id: 7, label: '快递', icon: '📦', path: '/owner/express', sortOrder: 7, enabled: true, color: '#5AC8FA', bg: '#EBF8FF' },
+  { id: 8, label: '社区活动', icon: '🎪', path: '/owner/activities', sortOrder: 8, enabled: true, color: '#FF2D55', bg: '#FFEBF0' },
+  { id: 9, label: '邻里圈', icon: '🤝', path: '/owner/neighborhood', sortOrder: 9, enabled: true, color: '#5856D6', bg: '#F0EBFF' },
 ];
 
 const defaultServiceCategories: OwnerServiceCategoryConfig[] = [
@@ -81,8 +82,9 @@ const defaultServices: OwnerServiceConfig[] = [
   { id: 2, categoryId: 1, icon: '💳', label: '我的账单', path: '/owner/bills', desc: '物业费、水电费、停车费缴纳', sortOrder: 2, enabled: true, relatedMineMenus: ['/owner/mine/payments'] },
   { id: 3, categoryId: 1, icon: '🚗', label: '停车服务', path: '/owner/parking', desc: '车位查询、租赁', sortOrder: 3, enabled: true, relatedMineMenus: [] },
   { id: 4, categoryId: 1, icon: '🔑', label: '门禁管理', path: '/owner/access', desc: '手机开门、访客授权', sortOrder: 4, enabled: true, relatedMineMenus: [] },
-  { id: 5, categoryId: 1, icon: '📦', label: '快递服务', path: '/owner/express', desc: '快递代收查询', sortOrder: 5, enabled: true, relatedMineMenus: ['/owner/mine/expresses'] },
-  { id: 6, categoryId: 1, icon: '📋', label: '装修申请', path: '/owner/decoration', desc: '装修备案申请', sortOrder: 6, enabled: true, relatedMineMenus: [] },
+  { id: 5, categoryId: 1, icon: '📋', label: '投票表决', path: '/owner/vote', desc: '业主大会、业委会选举、小区事务投票', sortOrder: 5, enabled: true, relatedMineMenus: ['/owner/mine/votes'] },
+  { id: 6, categoryId: 1, icon: '📦', label: '快递服务', path: '/owner/express', desc: '快递代收查询', sortOrder: 6, enabled: true, relatedMineMenus: ['/owner/mine/expresses'] },
+  { id: 7, categoryId: 1, icon: '📋', label: '装修申请', path: '/owner/decoration', desc: '装修备案申请', sortOrder: 7, enabled: true, relatedMineMenus: [] },
   // 生活服务（第三方商业服务）
   { id: 7, categoryId: 2, icon: '🏪', label: '周边商家', path: '/owner/shops', desc: '社区商家查询', sortOrder: 1, enabled: true, relatedMineMenus: [] },
   { id: 8, categoryId: 2, icon: '🛒', label: '在线购物', path: '/owner/services/online-shopping', desc: '商品在线购买', sortOrder: 2, enabled: true, relatedMineMenus: [] },
