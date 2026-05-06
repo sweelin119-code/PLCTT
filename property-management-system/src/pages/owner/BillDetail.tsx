@@ -15,6 +15,7 @@ const BillDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (!bill && billId) {
+      setLoading(true);
       ownerBillService.getBillById(billId).then(data => {
         setBill(data);
         setLoading(false);
@@ -41,7 +42,17 @@ const BillDetailPage: React.FC = () => {
     return (
       <div style={{ padding: 60, textAlign: 'center' }}>
         <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
-        <div style={{ fontSize: 15, color: '#8e8e93' }}>账单不存在</div>
+        <div style={{ fontSize: 15, color: '#8e8e93', marginBottom: 20 }}>账单不存在或已删除</div>
+        <div
+          onClick={() => navigate('/owner/bills')}
+          style={{
+            display: 'inline-flex', padding: '10px 24px',
+            background: '#007AFF', color: '#fff', borderRadius: 22,
+            fontSize: 14, fontWeight: 600, cursor: 'pointer',
+          }}
+        >
+          返回账单列表
+        </div>
       </div>
     );
   }
@@ -114,7 +125,7 @@ const BillDetailPage: React.FC = () => {
                 {detail.itemName}
               </div>
               <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>
-                {detail.unitPrice.toFixed(2)} × {detail.quantity}
+                ¥{detail.unitPrice.toFixed(2)} × {detail.quantity}
               </div>
             </div>
             <div style={{
@@ -192,6 +203,41 @@ const BillDetailPage: React.FC = () => {
             onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
           >
             立即缴费
+          </div>
+        </div>
+      )}
+
+      {/* ===== 已缴账单操作 ===== */}
+      {bill.status === 'paid' && (
+        <div style={{ padding: '20px 12px', display: 'flex', gap: 12 }}>
+          <div
+            onClick={() => navigate('/owner/bills/invoices')}
+            style={{
+              flex: 1, padding: '14px 0', textAlign: 'center',
+              background: '#fff', color: '#007AFF', borderRadius: 24,
+              fontSize: 15, fontWeight: 600, cursor: 'pointer',
+              border: '1px solid #007AFF',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#EBF5FF'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; }}
+          >
+            申请电子发票
+          </div>
+          <div
+            onClick={() => navigate('/owner/bills')}
+            style={{
+              flex: 1, padding: '14px 0', textAlign: 'center',
+              background: 'linear-gradient(135deg, #007AFF, #5856D6)',
+              color: '#fff', borderRadius: 24,
+              fontSize: 15, fontWeight: 600, cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(0,122,255,0.3)',
+              transition: 'opacity 0.2s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+          >
+            返回账单列表
           </div>
         </div>
       )}

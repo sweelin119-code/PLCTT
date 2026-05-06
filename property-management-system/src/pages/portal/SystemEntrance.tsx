@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   BankOutlined, AppstoreOutlined, ShopOutlined,
-  WechatOutlined, SettingOutlined,
+  WechatOutlined, SettingOutlined, TeamOutlined,
 } from '@ant-design/icons';
 
 interface SystemCard {
@@ -65,6 +65,15 @@ const systems: SystemCard[] = [
     features: ['端口配置', '公众号管理', '系统设置'],
     emoji: '⚙️',
     tag: '管理',
+  },
+  {
+    key: 'committee', title: '业委会端',
+    icon: <TeamOutlined />,
+    desc: '业主委员会 · 会议管理 · 协同监督',
+    color: '#eb2f96', gradient: 'linear-gradient(135deg, #eb2f96, #c41d7f)',
+    path: '/login?port=committee',
+    features: ['会议管理', '维修资金', '业主沟通'],
+    emoji: '📋',
   },
 ];
 

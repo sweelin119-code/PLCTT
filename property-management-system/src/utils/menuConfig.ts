@@ -255,12 +255,55 @@ export const governmentMenus: MenuItem[] = [
 
 // 物业管理端菜单
 export const propertyMenus: MenuItem[] = [
+  // 1. 工作台（固定）
   {
     key: 'dashboard',
     label: '工作台',
     icon: 'DashboardOutlined',
     path: '/property/dashboard'
   },
+  // 2. 收费管理
+  {
+    key: 'finance',
+    label: '收费管理',
+    icon: 'DollarOutlined',
+    children: [
+      { key: 'fee-items', label: '费用项管理', path: '/property/finance/fee-items' },
+      { key: 'house-fee-items', label: '房屋费用管理', path: '/property/finance/house-fee-items' },
+      { key: 'bills', label: '账单管理', path: '/property/finance/bills' },
+      { key: 'payments', label: '缴费管理', path: '/property/finance/payments' },
+      { key: 'collection', label: '催缴管理', path: '/property/finance/collection' },
+      { key: 'reports', label: '收费报表', path: '/property/finance/reports' },
+      { key: 'parking-fee', label: '停车收费管理', path: '/property/finance/parking-fee' },
+      { key: 'parking-fee-rates', label: '收费标准设置', path: '/property/finance/parking-fee-rates' },
+      { key: 'parking-fee-stats', label: '停车收费统计', path: '/property/finance/parking-fee-stats' },
+      { key: 'parking-fee-items', label: '车位费用管理', path: '/property/finance/parking-fee-items' },
+    ]
+  },
+  // 3. 报事报修（原维修工单，新增提交报修、报修类型配置）
+  {
+    key: 'repair',
+    label: '报事报修',
+    icon: 'FileTextOutlined',
+    children: [
+      { key: 'prop-repair-order', label: '工单管理', path: '/property/repair/order' },
+      { key: 'prop-repair-submit', label: '提交报修', path: '/property/repair/submit' },
+      { key: 'prop-repair-type', label: '报修类型配置', path: '/property/repair/type-config' },
+      { key: 'prop-repair-stats', label: '报修统计', path: '/property/repair/stats' },
+    ]
+  },
+  // 4. 投诉建议（原投诉处理，新增投诉类型配置）
+  {
+    key: 'complaint',
+    label: '投诉建议',
+    icon: 'WarningOutlined',
+    children: [
+      { key: 'prop-complaint-list', label: '投诉受理', path: '/property/complaint/list' },
+      { key: 'prop-complaint-type', label: '投诉类型配置', path: '/property/complaint/type-config' },
+      { key: 'prop-complaint-stats', label: '投诉统计', path: '/property/complaint/stats' },
+    ]
+  },
+  // 5. 资产管理（不变）
   {
     key: 'asset',
     label: '资产管理',
@@ -273,6 +316,7 @@ export const propertyMenus: MenuItem[] = [
       { key: 'data-sync', label: '数据同步', path: '/property/asset/sync' },
     ]
   },
+  // 6. 业主管理（不变）
   {
     key: 'owner',
     label: '业主管理',
@@ -283,24 +327,35 @@ export const propertyMenus: MenuItem[] = [
       { key: 'owner-accounts', label: '业主账户', path: '/property/owner/accounts' },
     ]
   },
+  // 7. 安保管理（原保安管理改名）
   {
-    key: 'merchant',
-    label: '商家管理',
-    icon: 'ShopOutlined',
+    key: 'security-guard',
+    label: '安保管理',
+    icon: 'SafetyOutlined',
     children: [
-      { key: 'prop-merchant-list', label: '商家列表', path: '/property/merchant/list' },
+      { key: 'guard-patrol', label: '巡逻管理', path: '/property/security-guard/patrol' },
+      { key: 'guard-monitor', label: '安全监控', path: '/property/security-guard/monitor' },
+      { key: 'guard-visitor', label: '访客管理', path: '/property/security-guard/visitor' },
+      { key: 'guard-parking', label: '停车收费执行', path: '/property/security-guard/parking' },
+      { key: 'guard-intercom', label: '对讲系统使用', path: '/property/security-guard/intercom' },
+      { key: 'guard-door-devices', label: '智能门禁管理', path: '/property/security/door-devices' },
     ]
   },
+  // 8. 设备管理（设备管理+维保管理合并）
   {
-    key: 'system',
-    label: '系统管理',
+    key: 'device',
+    label: '设备管理',
     icon: 'SettingOutlined',
     children: [
-      { key: 'staff-list', label: '账号管理', path: '/property/staff/list' },
-      { key: 'role-mgmt', label: '角色管理', path: '/property/roles' },
-      { key: 'prop-organization', label: '组织架构管理', path: '/property/organization' },
+      { key: 'device-type', label: '设备类型', path: '/property/device/type' },
+      { key: 'device-asset', label: '设备台账', path: '/property/device/asset' },
+      { key: 'device-inspect-plan', label: '巡检计划', path: '/property/device/inspect-plan' },
+      { key: 'device-inspect-task', label: '巡检任务', path: '/property/device/inspect-task' },
+      { key: 'device-inspect-record', label: '巡检台账', path: '/property/device/inspect-record' },
+      { key: 'device-energy', label: '能耗管理', path: '/property/device/energy' },
     ]
   },
+  // 9. 日常管理（不变）
   {
     key: 'daily',
     label: '日常管理',
@@ -312,52 +367,10 @@ export const propertyMenus: MenuItem[] = [
       { key: 'document', label: '内部文件', path: '/property/daily/document' },
     ]
   },
-  {
-    key: 'service',
-    label: '服务管理',
-    icon: 'CustomerServiceOutlined',
-    children: [
-      { key: 'service-standard', label: '服务标准', path: '/property/service/standard' },
-      { key: 'service-satisfaction', label: '满意度评价', path: '/property/service/satisfaction' },
-      { key: 'service-value', label: '增值服务', path: '/property/service/value' },
-    ]
-  },
-  {
-    key: 'security',
-    label: '安全管理',
-    icon: 'SafetyOutlined',
-    children: [
-      { key: 'security-check', label: '安全检查', path: '/property/security/check' },
-      { key: 'security-fire', label: '消防管理', path: '/property/security/fire' },
-      { key: 'security-emergency', label: '应急预案', path: '/property/security/emergency' },
-    ]
-  },
-  {
-    key: 'finance',
-    label: '收费管理',
-    icon: 'DollarOutlined',
-    children: [
-      { key: 'fee-items', label: '费用项目管理', path: '/property/finance/fee-items' },
-      { key: 'charge-rules', label: '收费标准设置', path: '/property/finance/charge-rules' },
-      { key: 'bills', label: '账单管理', path: '/property/finance/bills' },
-      { key: 'payments', label: '缴费管理', path: '/property/finance/payments' },
-      { key: 'collection', label: '催缴管理', path: '/property/finance/collection' },
-      { key: 'reports', label: '收费报表', path: '/property/finance/reports' },
-    ]
-  },
-  {
-    key: 'device',
-    label: '设备管理',
-    icon: 'SettingOutlined',
-    children: [
-      { key: 'device-asset', label: '设备台账', path: '/property/device/asset' },
-      { key: 'device-inspect', label: '设备巡检', path: '/property/device/inspect' },
-      { key: 'device-energy', label: '能耗管理', path: '/property/device/energy' },
-    ]
-  },
+  // 10. 员工管理（原人员管理改名）
   {
     key: 'staff',
-    label: '人员管理',
+    label: '员工管理',
     icon: 'TeamOutlined',
     children: [
       { key: 'staff-archive', label: '员工档案', path: '/property/staff/archive' },
@@ -365,85 +378,14 @@ export const propertyMenus: MenuItem[] = [
       { key: 'staff-performance', label: '绩效考核', path: '/property/staff/performance' },
     ]
   },
-  {
-    key: 'complaint',
-    label: '投诉处理',
-    icon: 'WarningOutlined',
-    children: [
-      { key: 'prop-complaint-list', label: '投诉受理', path: '/property/complaint/list' },
-      { key: 'prop-complaint-stats', label: '投诉统计', path: '/property/complaint/stats' },
-    ]
-  },
-  {
-    key: 'workorder',
-    label: '报事报修管理',
-    icon: 'FileTextOutlined',
-    children: [
-      { key: 'prop-workorder-list', label: '工单管理', path: '/property/workorder/list' },
-      { key: 'prop-workorder-stats', label: '工单统计', path: '/property/workorder/stats' },
-    ]
-  },
+  // 11. 合同管理（不变）
   {
     key: 'contract',
-    label: '采购/服务合同',
+    label: '合同管理',
     icon: 'FileProtectOutlined',
     path: '/property/contract'
   },
-  {
-    key: 'quality',
-    label: '品质管理',
-    icon: 'StarOutlined',
-    path: '/property/quality'
-  },
-  // 保安管理
-  {
-    key: 'security-guard',
-    label: '保安管理',
-    icon: 'SafetyOutlined',
-    children: [
-      { key: 'guard-patrol', label: '巡逻管理', path: '/property/security-guard/patrol' },
-      { key: 'guard-monitor', label: '安全监控', path: '/property/security-guard/monitor' },
-      { key: 'guard-visitor', label: '访客登记', path: '/property/security-guard/visitor' },
-      { key: 'guard-parking', label: '停车收费执行', path: '/property/security-guard/parking' },
-      { key: 'guard-intercom', label: '对讲系统使用', path: '/property/security-guard/intercom' },
-    ]
-  },
-  // 保洁管理
-  {
-    key: 'cleaning',
-    label: '保洁管理',
-    icon: 'CustomerServiceOutlined',
-    children: [
-      { key: 'clean-plan', label: '清洁计划', path: '/property/cleaning/plan' },
-      { key: 'clean-execute', label: '清洁执行', path: '/property/cleaning/execute' },
-      { key: 'clean-garbage', label: '垃圾处理', path: '/property/cleaning/garbage' },
-      { key: 'clean-disinfect', label: '消杀管理', path: '/property/cleaning/disinfect' },
-    ]
-  },
-  // 维保管理
-  {
-    key: 'maintenance',
-    label: '维保管理',
-    icon: 'ToolOutlined',
-    children: [
-      { key: 'maint-equip', label: '设备维护', path: '/property/maintenance/equipment' },
-      { key: 'maint-inspect', label: '巡检管理', path: '/property/maintenance/inspect' },
-      { key: 'maint-parts', label: '备件管理', path: '/property/maintenance/parts' },
-      { key: 'maint-special', label: '专项维修', path: '/property/maintenance/special' },
-    ]
-  },
-  // 绿化管理
-  {
-    key: 'greening',
-    label: '绿化管理',
-    icon: 'BulbOutlined',
-    children: [
-      { key: 'green-plan', label: '绿化养护计划', path: '/property/greening/plan' },
-      { key: 'green-execute', label: '绿化养护执行', path: '/property/greening/execute' },
-      { key: 'green-inspect', label: '绿化巡检', path: '/property/greening/inspect' },
-      { key: 'green-quality', label: '绿化质量评估', path: '/property/greening/quality' },
-    ]
-  },
+  // 12. 业主端管理（不变）
   {
     key: 'owner-config',
     label: '业主端管理',
@@ -452,6 +394,17 @@ export const propertyMenus: MenuItem[] = [
       { key: 'owner-banner', label: 'Banner配置管理', path: '/property/owner-config/banner' },
       { key: 'owner-quick-menu', label: '常用菜单配置', path: '/property/owner-config/quick-menu' },
       { key: 'owner-service', label: '服务功能配置', path: '/property/owner-config/service' },
+    ]
+  },
+  // 13. 系统管理（不变）
+  {
+    key: 'system',
+    label: '系统管理',
+    icon: 'SettingOutlined',
+    children: [
+      { key: 'staff-list', label: '账号管理', path: '/property/staff/list' },
+      { key: 'role-mgmt', label: '角色管理', path: '/property/roles' },
+      { key: 'prop-organization', label: '组织架构管理', path: '/property/organization' },
     ]
   },
 ];

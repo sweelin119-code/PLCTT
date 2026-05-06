@@ -3,24 +3,24 @@ import {
   CollectionTemplate, FeeStatistics, BuildingFeeSummary, FeeTrendPoint,
   BillQueryParams, PaymentQueryParams, CollectionQueryParams,
   BillGenerateParams, OfflinePaymentData, BillAdjustData,
+  HouseFeeItem, HouseFeeItemQueryParams, HouseFeeItemImportResult,
   FeeCategory, BillingCycle, PricingMode, BillStatus, PayMethod,
 } from './feeTypes';
-import { getProjectList } from './orgService';
 
 // ===== Mock 数据 =====
 
 // 费用项目
 const mockFeeItems: FeeItem[] = [
-  { id: 1, projectId: 1, name: '物业管理服务费', code: 'PROP_001', category: 'property_fee', unit: '元/㎡/月', billingCycle: 'month', taxRate: 0, sortOrder: 1, enabled: true, remark: '住宅物业费', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
-  { id: 2, projectId: 1, name: '车位管理费', code: 'PARK_001', category: 'parking_fee', unit: '元/月', billingCycle: 'month', taxRate: 0, sortOrder: 2, enabled: true, remark: '固定车位管理费', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
-  { id: 3, projectId: 1, name: '公摊水费', code: 'PUB_WATER', category: 'public_share', unit: '元/吨', billingCycle: 'month', taxRate: 0, sortOrder: 3, enabled: true, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
-  { id: 4, projectId: 1, name: '公摊电费', code: 'PUB_ELEC', category: 'public_share', unit: '元/度', billingCycle: 'month', taxRate: 0, sortOrder: 4, enabled: true, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
-  { id: 5, projectId: 1, name: '代收水费', code: 'AGT_WATER', category: 'agency', unit: '元/吨', billingCycle: 'month', taxRate: 0, sortOrder: 5, enabled: true, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
-  { id: 6, projectId: 1, name: '装修保证金', code: 'DEC_DEPOSIT', category: 'deposit', unit: '元/户', billingCycle: 'one_time', taxRate: 0, sortOrder: 6, enabled: true, remark: '装修完成后验收合格退还', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
-  { id: 7, projectId: 1, name: '装修垃圾清运费', code: 'DEC_TRASH', category: 'deposit', unit: '元/户', billingCycle: 'one_time', taxRate: 0, sortOrder: 7, enabled: true, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
-  { id: 8, projectId: 1, name: '临时停车费', code: 'PARK_TEMP', category: 'parking_fee', unit: '元/次', billingCycle: 'one_time', taxRate: 0, sortOrder: 8, enabled: true, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
-  { id: 9, projectId: 1, name: '家政服务费', code: 'VAL_HOUSE', category: 'value_added', unit: '元/次', billingCycle: 'one_time', taxRate: 6, sortOrder: 9, enabled: true, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
-  { id: 10, projectId: 1, name: '门禁卡工本费', code: 'OTH_CARD', category: 'other', unit: '元/张', billingCycle: 'one_time', taxRate: 0, sortOrder: 10, enabled: true, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
+  { id: 1, projectId: 1, name: '物业管理服务费', code: 'PROP_001', category: 'property_fee', unit: '元/㎡/月', billingCycle: 'month', taxRate: 0, sortOrder: 1, enabled: true, autoGenerate: true, generateDay: 5, remark: '住宅物业费', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
+  { id: 2, projectId: 1, name: '车位管理费', code: 'PARK_001', category: 'parking_fee', unit: '元/月', billingCycle: 'month', taxRate: 0, sortOrder: 2, enabled: true, autoGenerate: true, generateDay: 5, remark: '固定车位管理费', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
+  { id: 3, projectId: 1, name: '公摊水费', code: 'PUB_WATER', category: 'public_share', unit: '元/吨', billingCycle: 'month', taxRate: 0, sortOrder: 3, enabled: true, autoGenerate: true, generateDay: 10, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
+  { id: 4, projectId: 1, name: '公摊电费', code: 'PUB_ELEC', category: 'public_share', unit: '元/度', billingCycle: 'month', taxRate: 0, sortOrder: 4, enabled: true, autoGenerate: true, generateDay: 10, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
+  { id: 5, projectId: 1, name: '代收水费', code: 'AGT_WATER', category: 'agency', unit: '元/吨', billingCycle: 'month', taxRate: 0, sortOrder: 5, enabled: true, autoGenerate: false, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
+  { id: 6, projectId: 1, name: '装修保证金', code: 'DEC_DEPOSIT', category: 'deposit', unit: '元/户', billingCycle: 'one_time', taxRate: 0, sortOrder: 6, enabled: true, autoGenerate: false, remark: '装修完成后验收合格退还', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
+  { id: 7, projectId: 1, name: '装修垃圾清运费', code: 'DEC_TRASH', category: 'deposit', unit: '元/户', billingCycle: 'one_time', taxRate: 0, sortOrder: 7, enabled: true, autoGenerate: false, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
+  { id: 8, projectId: 1, name: '临时停车费', code: 'PARK_TEMP', category: 'parking_fee', unit: '元/次', billingCycle: 'one_time', taxRate: 0, sortOrder: 8, enabled: true, autoGenerate: false, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
+  { id: 9, projectId: 1, name: '家政服务费', code: 'VAL_HOUSE', category: 'value_added', unit: '元/次', billingCycle: 'one_time', taxRate: 6, sortOrder: 9, enabled: true, autoGenerate: false, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
+  { id: 10, projectId: 1, name: '门禁卡工本费', code: 'OTH_CARD', category: 'other', unit: '元/张', billingCycle: 'one_time', taxRate: 0, sortOrder: 10, enabled: true, autoGenerate: false, remark: '', createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00' },
 ];
 
 // 收费标准
@@ -153,6 +153,7 @@ let nextBillId = 100;
 let nextPaymentId = 100;
 let nextCollectionId = 100;
 let nextTemplateId = 100;
+let nextHouseFeeItemId = 100;
 
 // ===== 费用项目管理 =====
 export async function getFeeItems(projectId: number): Promise<FeeItem[]> {
@@ -251,6 +252,10 @@ export async function getBillById(id: number): Promise<Bill | null> {
 export async function generateBills(params: BillGenerateParams): Promise<Bill[]> {
   await delay();
   const newBills: Bill[] = [];
+  
+  // 获取房屋-费用项关联映射（只对有关联的房屋生成账单）
+  const houseFeeMap = await getHouseFeeItemMap(params.projectId);
+  
   const houses = params.houseIds?.length
     ? mockSimpleHouses.filter(h => params.houseIds!.includes(h.id))
     : params.buildingIds?.length
@@ -258,7 +263,13 @@ export async function generateBills(params: BillGenerateParams): Promise<Bill[]>
       : mockSimpleHouses;
 
   for (const house of houses) {
+    // 获取该房屋已关联的费用项ID
+    const associatedFeeItemIds = houseFeeMap.get(house.id) || [];
+    
     for (const feeItemId of params.feeItemIds) {
+      // 跳过未关联的费用项
+      if (!associatedFeeItemIds.includes(feeItemId)) continue;
+      
       const rule = mockChargeRules.find(r => r.feeItemId === feeItemId && r.houseType === house.houseType);
       if (!rule) continue;
       const exists = mockBills.some(b =>
@@ -301,6 +312,77 @@ export async function generateBills(params: BillGenerateParams): Promise<Bill[]>
     }
   }
   return newBills;
+}
+
+/**
+ * 自动生成账单 - 根据费用项设置的 autoGenerate 标志，为指定账期自动生成账单
+ * 超级管理端定时任务会调用此接口
+ */
+export async function autoGenerateBills(projectId: number, periodYear: number, periodMonth: number): Promise<{ total: number; bills: Bill[] }> {
+  await delay();
+  const newBills: Bill[] = [];
+  
+  // 获取房屋-费用项关联映射（只对有关联的房屋生成账单）
+  const houseFeeMap = await getHouseFeeItemMap(projectId);
+  
+  // 获取开启了自动生成的费用项
+  const autoItems = mockFeeItems.filter(f => f.projectId === projectId && f.enabled && f.autoGenerate && f.billingCycle !== 'one_time');
+  
+  for (const item of autoItems) {
+    const rules = mockChargeRules.filter(r => r.feeItemId === item.id && r.enabled);
+    if (rules.length === 0) continue;
+    
+    for (const rule of rules) {
+      const houses = mockSimpleHouses.filter(h => h.houseType === rule.houseType);
+      
+      for (const house of houses) {
+        // 检查该房屋是否关联了此费用项
+        const associatedFeeItemIds = houseFeeMap.get(house.id) || [];
+        if (!associatedFeeItemIds.includes(item.id)) continue;
+        
+        // 检查是否已存在相同账期的账单
+        const exists = mockBills.some(b =>
+          b.houseId === house.id && b.feeItemId === item.id &&
+          b.periodYear === periodYear && b.periodMonth === periodMonth
+        );
+        if (exists) continue;
+        
+        let amount = 0;
+        if (rule.pricingMode === 'area') amount = parseFloat((house.area * rule.price).toFixed(2));
+        else if (rule.pricingMode === 'fixed') amount = rule.price;
+        else if (rule.pricingMode === 'household') amount = rule.price;
+        
+        const bill: Bill = {
+          id: nextBillId++,
+          projectId,
+          billNo: `BILL${periodYear}${String(periodMonth).padStart(2, '0')}${String(nextBillId).padStart(6, '0')}`,
+          houseId: house.id,
+          ownerId: house.ownerId,
+          feeItemId: item.id,
+          periodYear,
+          periodMonth,
+          amount,
+          paidAmount: 0,
+          discountAmount: 0,
+          lateFee: 0,
+          status: 'pending',
+          dueDate: `${periodYear}-${String(periodMonth).padStart(2, '0')}-30`,
+          createTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+          updateTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+          houseFullName: house.fullName,
+          ownerName: house.ownerName,
+          ownerPhone: house.ownerPhone,
+          feeItemName: rule.feeItemName,
+          feeItemCategory: rule.feeItemCategory,
+          buildingName: house.buildingName,
+        };
+        mockBills.push(bill);
+        newBills.push(bill);
+      }
+    }
+  }
+  
+  return { total: newBills.length, bills: newBills };
 }
 
 export async function adjustBill(data: BillAdjustData): Promise<Bill | null> {
@@ -432,6 +514,170 @@ export async function saveCollectionTemplate(data: Omit<CollectionTemplate, 'id'
   const template: CollectionTemplate = { ...data, id: nextTemplateId++, createTime: now, updateTime: now };
   mockTemplates.push(template);
   return template;
+}
+
+// ===== 房屋-费用项关联管理 =====
+
+// Mock 房屋-费用项关联数据
+const mockHouseFeeItems: HouseFeeItem[] = [
+  { id: 1, projectId: 1, houseId: 1, feeItemId: 1, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '1栋1单元101', buildingName: '1栋', feeItemName: '物业管理服务费', feeItemCategory: 'property_fee' },
+  { id: 2, projectId: 1, houseId: 1, feeItemId: 3, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '1栋1单元101', buildingName: '1栋', feeItemName: '公摊水费', feeItemCategory: 'public_share' },
+  { id: 3, projectId: 1, houseId: 1, feeItemId: 4, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '1栋1单元101', buildingName: '1栋', feeItemName: '公摊电费', feeItemCategory: 'public_share' },
+  { id: 4, projectId: 1, houseId: 2, feeItemId: 1, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '1栋1单元102', buildingName: '1栋', feeItemName: '物业管理服务费', feeItemCategory: 'property_fee' },
+  { id: 5, projectId: 1, houseId: 2, feeItemId: 3, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '1栋1单元102', buildingName: '1栋', feeItemName: '公摊水费', feeItemCategory: 'public_share' },
+  { id: 6, projectId: 1, houseId: 3, feeItemId: 1, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '1栋1单元201', buildingName: '1栋', feeItemName: '物业管理服务费', feeItemCategory: 'property_fee' },
+  { id: 7, projectId: 1, houseId: 3, feeItemId: 4, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '1栋1单元201', buildingName: '1栋', feeItemName: '公摊电费', feeItemCategory: 'public_share' },
+  { id: 8, projectId: 1, houseId: 4, feeItemId: 1, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '2栋1单元101', buildingName: '2栋', feeItemName: '物业管理服务费', feeItemCategory: 'property_fee' },
+  { id: 9, projectId: 1, houseId: 4, feeItemId: 3, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '2栋1单元101', buildingName: '2栋', feeItemName: '公摊水费', feeItemCategory: 'public_share' },
+  { id: 10, projectId: 1, houseId: 5, feeItemId: 1, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '2栋1单元102', buildingName: '2栋', feeItemName: '物业管理服务费', feeItemCategory: 'property_fee' },
+  { id: 11, projectId: 1, houseId: 6, feeItemId: 1, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '2栋1单元201', buildingName: '2栋', feeItemName: '物业管理服务费', feeItemCategory: 'property_fee' },
+  { id: 12, projectId: 1, houseId: 7, feeItemId: 1, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '3栋1单元101', buildingName: '3栋', feeItemName: '物业管理服务费', feeItemCategory: 'property_fee' },
+  { id: 13, projectId: 1, houseId: 8, feeItemId: 1, enabled: true, createTime: '2026-01-01 00:00:00', updateTime: '2026-01-01 00:00:00', houseFullName: '3栋1单元102', buildingName: '3栋', feeItemName: '物业管理服务费', feeItemCategory: 'property_fee' },
+];
+
+// 获取房屋-费用项关联列表
+export async function getHouseFeeItems(params: HouseFeeItemQueryParams): Promise<{ list: HouseFeeItem[]; total: number }> {
+  await delay();
+  let filtered = mockHouseFeeItems.filter(h => h.projectId === params.projectId);
+  if (params.buildingId) filtered = filtered.filter(h => h.houseFullName?.includes(String(params.buildingId)));
+  if (params.feeItemId) filtered = filtered.filter(h => h.feeItemId === params.feeItemId);
+  if (params.keyword) filtered = filtered.filter(h =>
+    (h.houseFullName && h.houseFullName.includes(params.keyword!)) ||
+    (h.feeItemName && h.feeItemName.includes(params.keyword!))
+  );
+  const total = filtered.length;
+  const start = (params.page - 1) * params.pageSize;
+  return { list: filtered.slice(start, start + params.pageSize), total };
+}
+
+// 获取房屋已关联的费用项ID列表
+export async function getHouseFeeItemIds(houseId: number): Promise<number[]> {
+  await delay(50);
+  return mockHouseFeeItems.filter(h => h.houseId === houseId && h.enabled).map(h => h.feeItemId);
+}
+
+// 批量获取房屋-费用项关联（用于账单生成判断）
+export async function getHouseFeeItemMap(projectId: number): Promise<Map<number, number[]>> {
+  await delay(50);
+  const map = new Map<number, number[]>();
+  const items = mockHouseFeeItems.filter(h => h.projectId === projectId && h.enabled);
+  for (const item of items) {
+    if (!map.has(item.houseId)) map.set(item.houseId, []);
+    map.get(item.houseId)!.push(item.feeItemId);
+  }
+  return map;
+}
+
+// 创建房屋-费用项关联
+export async function createHouseFeeItem(data: Omit<HouseFeeItem, 'id' | 'createTime' | 'updateTime'>): Promise<HouseFeeItem> {
+  await delay();
+  const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  const feeItem = mockFeeItems.find(f => f.id === data.feeItemId);
+  const house = mockSimpleHouses.find(h => h.id === data.houseId);
+  const item: HouseFeeItem = {
+    ...data, id: nextHouseFeeItemId++, createTime: now, updateTime: now,
+    houseFullName: house?.fullName,
+    buildingName: house?.buildingName,
+    feeItemName: feeItem?.name,
+    feeItemCategory: feeItem?.category,
+  };
+  mockHouseFeeItems.push(item);
+  return item;
+}
+
+// 批量创建房屋-费用项关联
+export async function batchCreateHouseFeeItems(dataList: Omit<HouseFeeItem, 'id' | 'createTime' | 'updateTime'>[]): Promise<HouseFeeItem[]> {
+  await delay();
+  const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  const items: HouseFeeItem[] = [];
+  for (const data of dataList) {
+    const feeItem = mockFeeItems.find(f => f.id === data.feeItemId);
+    const house = mockSimpleHouses.find(h => h.id === data.houseId);
+    const item: HouseFeeItem = {
+      ...data, id: nextHouseFeeItemId++, createTime: now, updateTime: now,
+      houseFullName: house?.fullName,
+      buildingName: house?.buildingName,
+      feeItemName: feeItem?.name,
+      feeItemCategory: feeItem?.category,
+    };
+    mockHouseFeeItems.push(item);
+    items.push(item);
+  }
+  return items;
+}
+
+// 更新房屋-费用项关联
+export async function updateHouseFeeItem(id: number, data: Partial<HouseFeeItem>): Promise<HouseFeeItem | null> {
+  await delay();
+  const idx = mockHouseFeeItems.findIndex(h => h.id === id);
+  if (idx === -1) return null;
+  mockHouseFeeItems[idx] = { ...mockHouseFeeItems[idx], ...data, updateTime: new Date().toISOString().replace('T', ' ').substring(0, 19) };
+  return mockHouseFeeItems[idx];
+}
+
+// 删除房屋-费用项关联
+export async function deleteHouseFeeItem(id: number): Promise<boolean> {
+  await delay();
+  const idx = mockHouseFeeItems.findIndex(h => h.id === id);
+  if (idx === -1) return false;
+  mockHouseFeeItems.splice(idx, 1);
+  return true;
+}
+
+// 导入房屋-费用项关联
+export async function importHouseFeeItems(projectId: number, rows: { houseId: number; feeItemId: number; customPrice?: number }[]): Promise<HouseFeeItemImportResult> {
+  await delay();
+  const result: HouseFeeItemImportResult = { success: 0, failed: 0, errors: [] };
+  const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowNum = i + 1;
+    
+    // 验证房屋是否存在
+    const house = mockSimpleHouses.find(h => h.id === row.houseId);
+    if (!house) {
+      result.failed++;
+      result.errors.push({ row: rowNum, message: `房屋ID ${row.houseId} 不存在` });
+      continue;
+    }
+    
+    // 验证费用项是否存在
+    const feeItem = mockFeeItems.find(f => f.id === row.feeItemId);
+    if (!feeItem) {
+      result.failed++;
+      result.errors.push({ row: rowNum, message: `费用项ID ${row.feeItemId} 不存在` });
+      continue;
+    }
+    
+    // 检查是否已存在相同关联
+    const exists = mockHouseFeeItems.some(h => h.houseId === row.houseId && h.feeItemId === row.feeItemId);
+    if (exists) {
+      result.failed++;
+      result.errors.push({ row: rowNum, message: `房屋"${house.fullName}"已关联费用项"${feeItem.name}"` });
+      continue;
+    }
+    
+    // 创建关联
+    const item: HouseFeeItem = {
+      id: nextHouseFeeItemId++,
+      projectId,
+      houseId: row.houseId,
+      feeItemId: row.feeItemId,
+      customPrice: row.customPrice,
+      enabled: true,
+      createTime: now,
+      updateTime: now,
+      houseFullName: house.fullName,
+      buildingName: house.buildingName,
+      feeItemName: feeItem.name,
+      feeItemCategory: feeItem.category,
+    };
+    mockHouseFeeItems.push(item);
+    result.success++;
+  }
+  
+  return result;
 }
 
 // ===== 收费报表 =====

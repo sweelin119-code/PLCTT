@@ -1,7 +1,5 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { useParams } from 'react-router-dom';
 import { CheckCircleOutlined } from '@ant-design/icons';
 import type { BillItem, PayMethod } from '../../services/ownerBillService';
 

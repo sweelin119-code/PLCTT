@@ -44,6 +44,13 @@ const PORT_INFO: Record<string, { name: string; icon: string; color: string; gra
     gradient: 'linear-gradient(135deg, #fa8c16, #d46b08)',
     desc: '系统全局配置与超级管理平台',
   },
+  committee: {
+    name: '业委会端',
+    icon: '📋',
+    color: '#eb2f96',
+    gradient: 'linear-gradient(135deg, #eb2f96, #c41d7f)',
+    desc: '业主委员会工作管理平台',
+  },
 };
 
 const Login: React.FC = () => {
@@ -82,6 +89,10 @@ const Login: React.FC = () => {
     superadmin: [
       { role: '超级管理员', phone: '13000000001' },
     ],
+    committee: [
+      { role: '业委会主任（张建国）', phone: '13500000001' },
+      { role: '业委会委员（李明华）', phone: '13500000002' },
+    ],
   };
 
   const accounts = testAccounts[port] || testAccounts.property;
@@ -108,6 +119,8 @@ const Login: React.FC = () => {
         targetPath = '/owner/home';
       } else if (port === 'superadmin') {
         targetPath = '/superadmin/port-config';
+      } else if (port === 'committee') {
+        targetPath = '/committee/dashboard';
       }
       navigate(targetPath, { replace: true });
     } catch (err: any) {
@@ -132,6 +145,8 @@ const Login: React.FC = () => {
         targetPath = '/owner/home';
       } else if (port === 'superadmin') {
         targetPath = '/superadmin/port-config';
+      } else if (port === 'committee') {
+        targetPath = '/committee/dashboard';
       }
       navigate(targetPath, { replace: true });
     } catch (err: any) {

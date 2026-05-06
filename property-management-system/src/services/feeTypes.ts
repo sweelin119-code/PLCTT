@@ -41,6 +41,8 @@ export interface FeeItem {
   taxRate: number;
   sortOrder: number;
   enabled: boolean;
+  autoGenerate?: boolean;    // 是否自动生成账单
+  generateDay?: number;      // 自动生成账单日（如每月5号）
   remark?: string;
   createTime: string;
   updateTime: string;
@@ -239,4 +241,76 @@ export interface BillAdjustData {
   adjustType: 'discount' | 'write_off' | 'late_fee';
   amount: number;
   reason: string;
+}
+
+// ===== 房屋-费用项关联 =====
+export interface HouseFeeItem {
+  id: number;
+  projectId: number;
+  houseId: number;
+  feeItemId: number;
+  chargeRuleId?: number;
+  customPrice?: number;
+  enabled: boolean;
+  createTime: string;
+  updateTime: string;
+  // 关联信息（展示用）
+  houseFullName?: string;
+  buildingName?: string;
+  feeItemName?: string;
+  feeItemCategory?: FeeCategory;
+  chargeRuleDesc?: string;
+}
+
+// 房屋-费用项关联查询参数
+export interface HouseFeeItemQueryParams {
+  projectId: number;
+  buildingId?: number;
+  feeItemId?: number;
+  keyword?: string;
+  page: number;
+  pageSize: number;
+}
+
+// 房屋-费用项关联导入结果
+export interface HouseFeeItemImportResult {
+  success: number;
+  failed: number;
+  errors: { row: number; message: string }[];
+}
+
+// ===== 车位-费用项关联 =====
+export interface ParkingFeeItem {
+  id: number;
+  projectId: number;
+  parkingId: number;
+  feeItemId: number;
+  chargeRuleId?: number;
+  customPrice?: number;
+  enabled: boolean;
+  createTime: string;
+  updateTime: string;
+  // 关联信息（展示用）
+  parkingCode?: string;
+  parkingType?: string;
+  feeItemName?: string;
+  feeItemCategory?: FeeCategory;
+  chargeRuleDesc?: string;
+}
+
+// 车位-费用项关联查询参数
+export interface ParkingFeeItemQueryParams {
+  projectId: number;
+  parkingType?: string;
+  feeItemId?: number;
+  keyword?: string;
+  page: number;
+  pageSize: number;
+}
+
+// 车位-费用项关联导入结果
+export interface ParkingFeeItemImportResult {
+  success: number;
+  failed: number;
+  errors: { row: number; message: string }[];
 }

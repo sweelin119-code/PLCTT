@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RightOutlined, ExclamationCircleOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import type { BillItem, BillOverview, BillType } from '../../services/ownerBillService';
+import type { BillItem, BillOverview, BillCategory } from '../../services/ownerBillService';
 import * as ownerBillService from '../../services/ownerBillService';
 
 // ===== 类型定义 =====
-type TabKey = 'all' | BillType;
+type TabKey = 'all' | BillCategory;
 
 interface TabItem {
   key: TabKey;
@@ -14,10 +14,8 @@ interface TabItem {
 
 const tabs: TabItem[] = [
   { key: 'all', label: '全部' },
-  { key: 'property', label: '物业费' },
-  { key: 'water', label: '水费' },
-  { key: 'electric', label: '电费' },
-  { key: 'parking', label: '停车费' },
+  { key: 'house', label: '房屋费用' },
+  { key: 'parking', label: '停车费用' },
 ];
 
 // ===== 工具函数 =====
@@ -36,22 +34,12 @@ const getStatusConfig = (status: BillItem['status']) => {
   }
 };
 
-const getBillTypeColor = (type: BillType): string => {
-  switch (type) {
-    case 'property': return '#007AFF';
-    case 'water': return '#34C759';
-    case 'electric': return '#FF9500';
-    case 'parking': return '#AF52DE';
-  }
+const getCategoryColor = (category: BillCategory): string => {
+  return category === 'house' ? '#007AFF' : '#AF52DE';
 };
 
-const getBillTypeBg = (type: BillType): string => {
-  switch (type) {
-    case 'property': return '#EBF5FF';
-    case 'water': return '#EBFFEB';
-    case 'electric': return '#FFF5EB';
-    case 'parking': return '#F5EBFF';
-  }
+const getCategoryBg = (category: BillCategory): string => {
+  return category === 'house' ? '#EBF5FF' : '#F5EBFF';
 };
 
 // ===== 主组件 =====
@@ -62,7 +50,6 @@ const MyBills: React.FC = () => {
   const [bills, setBills] = useState<BillItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showPayHistory, setShowPayHistory] = useState(false);
 
   // 当前模拟的房屋ID
   const currentHouseId = 'H1001';
@@ -74,7 +61,7 @@ const MyBills: React.FC = () => {
       const [overviewData, billsData] = await Promise.all([
         ownerBillService.getBillOverview(currentHouseId),
         ownerBillService.getBills(currentHouseId, {
-          billType: activeTab === 'all' ? undefined : activeTab,
+          category: activeTab === 'all' ? undefined : activeTab,
         }),
       ]);
       setOverview(overviewData);
@@ -193,6 +180,31 @@ const MyBills: React.FC = () => {
               </div>
             </div>
           </div>
+          {/* 分类待缴快捷入口 */}
+          <div style={{
+            display: 'flex', gap: 12, marginTop: 16,
+          }}>
+            <div style={{
+              flex: 1, background: 'rgba(255,255,255,0.12)',
+              borderRadius: 10, padding: '10px 14px',
+              backdropFilter: 'blur(10px)',
+            }}>
+              <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 2 }}>🏠 房屋费用</div>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>
+                {formatAmount(overview?.housePending || 0)}
+              </div>
+            </div>
+            <div style={{
+              flex: 1, background: 'rgba(255,255,255,0.12)',
+              borderRadius: 10, padding: '10px 14px',
+              backdropFilter: 'blur(10px)',
+            }}>
+              <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 2 }}>🚗 停车费用</div>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>
+                {formatAmount(overview?.parkingPending || 0)}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -244,14 +256,14 @@ const MyBills: React.FC = () => {
               暂无账单
             </div>
             <div style={{ fontSize: 13, color: '#c7c7cc', marginTop: 4 }}>
-              该分类下暂无待处理账单
+              {activeTab === 'all' ? '暂无待处理账单' : `暂无${activeTab === 'house' ? '房屋费用' : '停车费用'}账单`}
             </div>
           </div>
         ) : (
           bills.map(bill => {
             const statusConfig = getStatusConfig(bill.status);
-            const typeColor = getBillTypeColor(bill.billType);
-            const typeBg = getBillTypeBg(bill.billType);
+            const catColor = getCategoryColor(bill.category);
+            const catBg = getCategoryBg(bill.category);
 
             return (
               <div
@@ -273,10 +285,10 @@ const MyBills: React.FC = () => {
                     alignItems: 'flex-start', marginBottom: 10,
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      {/* 类型标签 */}
+                      {/* 分类标签 */}
                       <div style={{
                         padding: '4px 10px', borderRadius: 6,
-                        background: typeBg, color: typeColor,
+                        background: catBg, color: catColor,
                         fontSize: 12, fontWeight: 600,
                       }}>
                         {bill.billTypeName}
@@ -371,7 +383,7 @@ const MyBills: React.FC = () => {
       <div style={{ padding: '8px 12px 20px' }}>
         {/* 缴费记录入口 */}
         <div
-          onClick={() => setShowPayHistory(!showPayHistory)}
+          onClick={() => navigate('/owner/bills/payment-history')}
           style={{
             background: '#fff', borderRadius: 14,
             padding: '14px 16px', marginBottom: 12,

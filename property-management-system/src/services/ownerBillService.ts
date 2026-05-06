@@ -3,7 +3,12 @@
 
 // ===== 类型定义 =====
 
-export type BillType = 'property' | 'water' | 'electric' | 'parking';
+/** 账单分类：house=房屋费用, parking=停车费用 */
+export type BillCategory = 'house' | 'parking';
+
+/** 费用类型（对应后台费用项配置） */
+export type BillType = 'property' | 'water' | 'electric' | 'parking' | 'parking_management';
+
 export type BillStatus = 'pending' | 'paid' | 'overdue';
 export type InvoiceStatus = 'none' | 'applied' | 'issued';
 export type PayMethod = 'wechat' | 'alipay';
@@ -18,31 +23,34 @@ export interface BillDetail {
 export interface BillItem {
   id: string;
   houseId: string;
+  category: BillCategory;       // 账单分类：房屋费用/停车费用
   billType: BillType;
   billTypeName: string;
-  period: string;           // 费用周期，如 "2026-05"
-  amount: number;           // 应缴金额
-  paidAmount: number;       // 已缴金额
+  period: string;               // 费用周期，如 "2026-05"
+  amount: number;               // 应缴金额
+  paidAmount: number;           // 已缴金额
   status: BillStatus;
-  dueDate: string;          // 缴费截止日期
-  paidAt?: string;          // 缴费时间
-  paymentMethod?: string;   // 支付方式
+  dueDate: string;              // 缴费截止日期
+  paidAt?: string;              // 缴费时间
+  paymentMethod?: string;       // 支付方式
   invoiceStatus: InvoiceStatus;
-  details: BillDetail[];    // 费用明细
+  details: BillDetail[];        // 费用明细
   createdAt: string;
 }
 
 export interface BillOverview {
-  totalPending: number;     // 总待缴金额
-  monthAmount: number;      // 本月应缴金额
-  overdueCount: number;     // 欠费笔数
-  overdueAmount: number;    // 欠费总金额
+  totalPending: number;         // 总待缴金额
+  monthAmount: number;          // 本月应缴金额
+  overdueCount: number;         // 欠费笔数
+  overdueAmount: number;        // 欠费总金额
+  housePending: number;         // 房屋费用待缴
+  parkingPending: number;       // 停车费用待缴
 }
 
 export interface PaymentRecord {
   id: string;
   billId: string;
-  billType: BillType;
+  category: BillCategory;
   billTypeName: string;
   period: string;
   amount: number;
@@ -55,6 +63,7 @@ export interface PaymentRecord {
 export interface InvoiceRecord {
   id: string;
   billId: string;
+  category: BillCategory;
   billTypeName: string;
   period: string;
   amount: number;
@@ -64,12 +73,32 @@ export interface InvoiceRecord {
   issueTime?: string;
 }
 
+// ===== 工具函数 =====
+
+/** 根据费用类型获取所属分类 */
+export function getCategoryByBillType(billType: BillType): BillCategory {
+  switch (billType) {
+    case 'parking':
+    case 'parking_management':
+      return 'parking';
+    default:
+      return 'house';
+  }
+}
+
+/** 获取分类名称 */
+export function getCategoryName(category: BillCategory): string {
+  return category === 'house' ? '房屋费用' : '停车费用';
+}
+
 // ===== Mock 数据 =====
 
 const mockBills: BillItem[] = [
+  // ---- 房屋费用 ----
   {
     id: 'B202605001',
     houseId: 'H1001',
+    category: 'house',
     billType: 'property',
     billTypeName: '物业费',
     period: '2026-05',
@@ -88,60 +117,46 @@ const mockBills: BillItem[] = [
   {
     id: 'B202605002',
     houseId: 'H1001',
+    category: 'house',
     billType: 'water',
-    billTypeName: '水费',
+    billTypeName: '公摊水费',
     period: '2026-04',
-    amount: 45.80,
+    amount: 12.80,
     paidAmount: 0,
     status: 'overdue',
     dueDate: '2026-04-30',
     invoiceStatus: 'none',
     details: [
-      { itemName: '自来水费', unitPrice: 3.50, quantity: 12, amount: 42.00 },
-      { itemName: '污水处理费', unitPrice: 0.95, quantity: 12, amount: 11.40 },
-      { itemName: '代收垃圾费', unitPrice: -7.60, quantity: 1, amount: -7.60 },
+      { itemName: '公共区域水费（公摊）', unitPrice: 3.50, quantity: 3.2, amount: 11.20 },
+      { itemName: '绿化用水（公摊）', unitPrice: 0.50, quantity: 3.2, amount: 1.60 },
     ],
     createdAt: '2026-04-01T00:00:00Z',
   },
   {
     id: 'B202605003',
     houseId: 'H1001',
+    category: 'house',
     billType: 'electric',
-    billTypeName: '电费',
+    billTypeName: '公摊电费',
     period: '2026-04',
-    amount: 186.20,
-    paidAmount: 186.20,
+    amount: 36.20,
+    paidAmount: 36.20,
     status: 'paid',
     dueDate: '2026-04-30',
     paidAt: '2026-04-15T10:30:00Z',
     paymentMethod: '微信支付',
     invoiceStatus: 'issued',
     details: [
-      { itemName: '居民用电', unitPrice: 0.60, quantity: 310, amount: 186.00 },
-      { itemName: '代征附加费', unitPrice: 0.0006, quantity: 310, amount: 0.20 },
+      { itemName: '公共照明电费（公摊）', unitPrice: 0.60, quantity: 52, amount: 31.20 },
+      { itemName: '电梯电费（公摊）', unitPrice: 0.60, quantity: 8, amount: 4.80 },
+      { itemName: '代征附加费', unitPrice: 0.0004, quantity: 52, amount: 0.20 },
     ],
     createdAt: '2026-04-01T00:00:00Z',
   },
   {
     id: 'B202605004',
     houseId: 'H1001',
-    billType: 'parking',
-    billTypeName: '停车费',
-    period: '2026-05',
-    amount: 150.00,
-    paidAmount: 0,
-    status: 'pending',
-    dueDate: '2026-05-31',
-    invoiceStatus: 'none',
-    details: [
-      { itemName: '车位管理费', unitPrice: 100.00, quantity: 1, amount: 100.00 },
-      { itemName: '车位租赁费', unitPrice: 50.00, quantity: 1, amount: 50.00 },
-    ],
-    createdAt: '2026-05-01T00:00:00Z',
-  },
-  {
-    id: 'B202605005',
-    houseId: 'H1001',
+    category: 'house',
     billType: 'property',
     billTypeName: '物业费',
     period: '2026-04',
@@ -160,53 +175,94 @@ const mockBills: BillItem[] = [
     createdAt: '2026-04-01T00:00:00Z',
   },
   {
-    id: 'B202605006',
+    id: 'B202605005',
     houseId: 'H1001',
+    category: 'house',
     billType: 'water',
-    billTypeName: '水费',
+    billTypeName: '公摊水费',
     period: '2026-03',
-    amount: 38.60,
-    paidAmount: 38.60,
+    amount: 10.60,
+    paidAmount: 10.60,
     status: 'paid',
     dueDate: '2026-03-31',
     paidAt: '2026-03-12T09:15:00Z',
     paymentMethod: '微信支付',
     invoiceStatus: 'none',
     details: [
-      { itemName: '自来水费', unitPrice: 3.50, quantity: 10, amount: 35.00 },
-      { itemName: '污水处理费', unitPrice: 0.95, quantity: 10, amount: 9.50 },
-      { itemName: '代收垃圾费', unitPrice: -5.90, quantity: 1, amount: -5.90 },
+      { itemName: '公共区域水费（公摊）', unitPrice: 3.50, quantity: 2.5, amount: 8.75 },
+      { itemName: '绿化用水（公摊）', unitPrice: 0.50, quantity: 3.7, amount: 1.85 },
     ],
     createdAt: '2026-03-01T00:00:00Z',
   },
   {
-    id: 'B202605007',
+    id: 'B202605006',
     houseId: 'H1001',
+    category: 'house',
     billType: 'electric',
-    billTypeName: '电费',
+    billTypeName: '公摊电费',
     period: '2026-05',
-    amount: 205.30,
+    amount: 42.30,
     paidAmount: 0,
     status: 'pending',
     dueDate: '2026-05-31',
     invoiceStatus: 'none',
     details: [
-      { itemName: '居民用电', unitPrice: 0.60, quantity: 342, amount: 205.20 },
-      { itemName: '代征附加费', unitPrice: 0.0003, quantity: 342, amount: 0.10 },
+      { itemName: '公共照明电费（公摊）', unitPrice: 0.60, quantity: 60, amount: 36.00 },
+      { itemName: '电梯电费（公摊）', unitPrice: 0.60, quantity: 10, amount: 6.00 },
+      { itemName: '代征附加费', unitPrice: 0.0005, quantity: 60, amount: 0.30 },
     ],
     createdAt: '2026-05-01T00:00:00Z',
+  },
+  // ---- 停车费用 ----
+  {
+    id: 'B202605007',
+    houseId: 'H1001',
+    category: 'parking',
+    billType: 'parking',
+    billTypeName: '停车费',
+    period: '2026-05',
+    amount: 150.00,
+    paidAmount: 0,
+    status: 'pending',
+    dueDate: '2026-05-31',
+    invoiceStatus: 'none',
+    details: [
+      { itemName: '车位租赁费', unitPrice: 100.00, quantity: 1, amount: 100.00 },
+      { itemName: '车位管理费', unitPrice: 50.00, quantity: 1, amount: 50.00 },
+    ],
+    createdAt: '2026-05-01T00:00:00Z',
+  },
+  {
+    id: 'B202605008',
+    houseId: 'H1001',
+    category: 'parking',
+    billType: 'parking_management',
+    billTypeName: '车位管理费',
+    period: '2026-04',
+    amount: 50.00,
+    paidAmount: 50.00,
+    status: 'paid',
+    dueDate: '2026-04-30',
+    paidAt: '2026-04-08T14:20:00Z',
+    paymentMethod: '微信支付',
+    invoiceStatus: 'none',
+    details: [
+      { itemName: '车位管理费', unitPrice: 50.00, quantity: 1, amount: 50.00 },
+    ],
+    createdAt: '2026-04-01T00:00:00Z',
   },
 ];
 
 const mockPayments: PaymentRecord[] = [
-  { id: 'P202604001', billId: 'B202605003', billType: 'electric', billTypeName: '电费', period: '2026-04', amount: 186.20, payMethod: 'wechat', payTime: '2026-04-15 10:30', tradeNo: 'WX202604151030001', invoiceStatus: 'issued' },
-  { id: 'P202604002', billId: 'B202605005', billType: 'property', billTypeName: '物业费', period: '2026-04', amount: 358.50, payMethod: 'alipay', payTime: '2026-04-08 14:20', tradeNo: 'AL202604081420002', invoiceStatus: 'applied' },
-  { id: 'P202603001', billId: 'B202605006', billType: 'water', billTypeName: '水费', period: '2026-03', amount: 38.60, payMethod: 'wechat', payTime: '2026-03-12 09:15', tradeNo: 'WX202603120915003', invoiceStatus: 'none' },
+  { id: 'P202604001', billId: 'B202605003', category: 'house', billTypeName: '公摊电费', period: '2026-04', amount: 36.20, payMethod: 'wechat', payTime: '2026-04-15 10:30', tradeNo: 'WX202604151030001', invoiceStatus: 'issued' },
+  { id: 'P202604002', billId: 'B202605004', category: 'house', billTypeName: '物业费', period: '2026-04', amount: 358.50, payMethod: 'alipay', payTime: '2026-04-08 14:20', tradeNo: 'AL202604081420002', invoiceStatus: 'applied' },
+  { id: 'P202603001', billId: 'B202605005', category: 'house', billTypeName: '公摊水费', period: '2026-03', amount: 10.60, payMethod: 'wechat', payTime: '2026-03-12 09:15', tradeNo: 'WX202603120915003', invoiceStatus: 'none' },
+  { id: 'P202604003', billId: 'B202605008', category: 'parking', billTypeName: '车位管理费', period: '2026-04', amount: 50.00, payMethod: 'wechat', payTime: '2026-04-08 14:20', tradeNo: 'WX202604081420004', invoiceStatus: 'none' },
 ];
 
 const mockInvoices: InvoiceRecord[] = [
-  { id: 'INV202604001', billId: 'B202605003', billTypeName: '电费', period: '2026-04', amount: 186.20, invoiceNo: 'INV20260415001', status: 'issued', applyTime: '2026-04-15 10:35', issueTime: '2026-04-15 14:00' },
-  { id: 'INV202604002', billId: 'B202605005', billTypeName: '物业费', period: '2026-04', amount: 358.50, invoiceNo: '', status: 'applied', applyTime: '2026-04-08 14:25' },
+  { id: 'INV202604001', billId: 'B202605003', category: 'house', billTypeName: '公摊电费', period: '2026-04', amount: 36.20, invoiceNo: 'INV20260415001', status: 'issued', applyTime: '2026-04-15 10:35', issueTime: '2026-04-15 14:00' },
+  { id: 'INV202604002', billId: 'B202605004', category: 'house', billTypeName: '物业费', period: '2026-04', amount: 358.50, invoiceNo: '', status: 'applied', applyTime: '2026-04-08 14:25' },
 ];
 
 // ===== 模拟延迟 =====
@@ -230,6 +286,12 @@ export async function getBillOverview(houseId: string): Promise<BillOverview> {
     monthAmount: monthBills.reduce((sum, b) => sum + b.amount, 0),
     overdueCount: overdue.length,
     overdueAmount: overdue.reduce((sum, b) => sum + b.amount, 0),
+    housePending: houseBills
+      .filter(b => b.category === 'house' && (b.status === 'pending' || b.status === 'overdue'))
+      .reduce((sum, b) => sum + b.amount, 0),
+    parkingPending: houseBills
+      .filter(b => b.category === 'parking' && (b.status === 'pending' || b.status === 'overdue'))
+      .reduce((sum, b) => sum + b.amount, 0),
   };
 }
 
@@ -238,13 +300,13 @@ export async function getBillOverview(houseId: string): Promise<BillOverview> {
  */
 export async function getBills(
   houseId: string,
-  filter?: { billType?: BillType; status?: BillStatus; page?: number; pageSize?: number }
+  filter?: { category?: BillCategory; status?: BillStatus; page?: number; pageSize?: number }
 ): Promise<{ list: BillItem[]; total: number }> {
   await delay(600);
   let filtered = mockBills.filter(b => b.houseId === houseId);
 
-  if (filter?.billType) {
-    filtered = filtered.filter(b => b.billType === filter.billType);
+  if (filter?.category) {
+    filtered = filtered.filter(b => b.category === filter.category);
   }
   if (filter?.status) {
     filtered = filtered.filter(b => b.status === filter.status);
@@ -295,6 +357,23 @@ export async function applyInvoice(billId: string): Promise<boolean> {
   const bill = mockBills.find(b => b.id === billId);
   if (bill) {
     bill.invoiceStatus = 'applied';
+
+    // 同步向 mockInvoices 中添加发票记录，避免数据丢失
+    const existingInvoice = mockInvoices.find(inv => inv.billId === billId);
+    if (!existingInvoice) {
+      const now = new Date();
+      mockInvoices.push({
+        id: `INV${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(mockInvoices.length + 1).padStart(3, '0')}`,
+        billId: bill.id,
+        category: bill.category,
+        billTypeName: bill.billTypeName,
+        period: bill.period,
+        amount: bill.amount,
+        invoiceNo: '',
+        status: 'applied',
+        applyTime: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+      });
+    }
   }
   return true;
 }
@@ -309,7 +388,7 @@ export async function confirmPayment(params: {
   await delay(1500);
   // 模拟支付成功
   const tradeNo = `${params.payMethod === 'wechat' ? 'WX' : 'AL'}${Date.now()}`;
-  
+
   // 更新账单状态
   params.billIds.forEach(id => {
     const bill = mockBills.find(b => b.id === id);
@@ -318,6 +397,30 @@ export async function confirmPayment(params: {
       bill.paidAmount = bill.amount;
       bill.paidAt = new Date().toISOString();
       bill.paymentMethod = params.payMethod === 'wechat' ? '微信支付' : '支付宝';
+    }
+  });
+
+  // 同步向 mockPayments 中添加支付记录
+  params.billIds.forEach(id => {
+    const bill = mockBills.find(b => b.id === id);
+    if (bill) {
+      const existingPayment = mockPayments.find(p => p.billId === id);
+      if (!existingPayment) {
+        const now = new Date();
+        const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        mockPayments.push({
+          id: `P${timeStr.replace(/[-: ]/g, '')}${String(mockPayments.length + 1).padStart(3, '0')}`,
+          billId: bill.id,
+          category: bill.category,
+          billTypeName: bill.billTypeName,
+          period: bill.period,
+          amount: bill.amount,
+          payMethod: params.payMethod,
+          payTime: timeStr,
+          tradeNo: `${params.payMethod === 'wechat' ? 'WX' : 'AL'}${Date.now()}${String(mockPayments.length + 1).padStart(3, '0')}`,
+          invoiceStatus: 'none',
+        });
+      }
     }
   });
 
