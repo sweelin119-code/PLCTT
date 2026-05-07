@@ -1,115 +1,129 @@
-// ===== 角色管理服务（Mock 实现）=====
-import type { Role } from './types';
-import { mockRoles, mockPermissions } from './mockData';
-
-const delay = (ms: number = 200) => new Promise(resolve => setTimeout(resolve, ms));
+import apiClient from './apiClient';
+import type { Role, Permission } from './types';
 
 // 获取角色列表
 export async function getRoleList(params?: {
   portType?: string;
   keyword?: string;
+  status?: number;
 }): Promise<Role[]> {
-  await delay();
-
-  let filtered = [...mockRoles];
-
-  if (params?.portType) {
-    filtered = filtered.filter(r => r.portType === params.portType);
+  try {
+    const res = await apiClient.get('/api/roles', { params });
+    if (res.data.code === 200) {
+      return res.data.data;
+    }
+    throw new Error(res.data.message || '获取角色列表失败');
+  } catch (error: any) {
+    console.error('[roleService] getRoleList error:', error);
+    throw error;
   }
-
-  if (params?.keyword) {
-    const kw = params.keyword.toLowerCase();
-    filtered = filtered.filter(r =>
-      r.roleName.toLowerCase().includes(kw) ||
-      r.roleCode.toLowerCase().includes(kw)
-    );
-  }
-
-  return filtered;
 }
 
-// 根据ID获取角色
+// 获取单个角色
 export async function getRoleById(id: number): Promise<Role | null> {
-  await delay();
-  return mockRoles.find(r => r.id === id) || null;
+  try {
+    const res = await apiClient.get(`/api/roles/${id}`);
+    if (res.data.code === 200) {
+      return res.data.data;
+    }
+    if (res.data.code === 404) return null;
+    throw new Error(res.data.message || '获取角色失败');
+  } catch (error: any) {
+    console.error('[roleService] getRoleById error:', error);
+    throw error;
+  }
 }
 
-// 根据端口类型获取角色
+// 按端口类型获取角色
 export async function getRolesByPortType(portType: string): Promise<Role[]> {
-  await delay();
-  return mockRoles.filter(r => r.portType === portType);
+  try {
+    const res = await apiClient.get('/api/roles', { params: { portType } });
+    if (res.data.code === 200) {
+      return res.data.data;
+    }
+    throw new Error(res.data.message || '获取角色失败');
+  } catch (error: any) {
+    console.error('[roleService] getRolesByPortType error:', error);
+    throw error;
+  }
 }
 
 // 更新角色权限
 export async function updateRolePermissions(roleId: number, permissions: string[]): Promise<Role> {
-  await delay();
-
-  const role = mockRoles.find(r => r.id === roleId);
-  if (!role) throw new Error('角色不存在');
-
-  role.permissions = permissions;
-  return role;
+  try {
+    const res = await apiClient.put(`/api/roles/${roleId}/permissions`, { permissions });
+    if (res.data.code === 200) {
+      return res.data.data;
+    }
+    throw new Error(res.data.message || '更新权限失败');
+  } catch (error: any) {
+    console.error('[roleService] updateRolePermissions error:', error);
+    throw error;
+  }
 }
 
-// 获取所有权限列表
-export async function getAllPermissions() {
-  await delay();
-  return mockPermissions;
+// 获取所有权限
+export async function getAllPermissions(): Promise<Permission[]> {
+  try {
+    const res = await apiClient.get('/api/roles/permissions/all');
+    if (res.data.code === 200) {
+      return res.data.data;
+    }
+    throw new Error(res.data.message || '获取权限列表失败');
+  } catch (error: any) {
+    console.error('[roleService] getAllPermissions error:', error);
+    throw error;
+  }
 }
 
-// 新增角色
+// 创建角色
 export async function createRole(data: {
   roleCode: string;
   roleName: string;
   portType: string;
-  description: string;
+  description?: string;
   permissions?: string[];
 }): Promise<Role> {
-  await delay();
-
-  if (mockRoles.some(r => r.roleCode === data.roleCode)) {
-    throw new Error('角色编码已存在');
+  try {
+    const res = await apiClient.post('/api/roles', data);
+    if (res.data.code === 200) {
+      return res.data.data;
+    }
+    throw new Error(res.data.message || '创建角色失败');
+  } catch (error: any) {
+    console.error('[roleService] createRole error:', error);
+    throw error;
   }
-
-  const newId = Math.max(...mockRoles.map(r => r.id)) + 1;
-  const newRole: Role = {
-    id: newId,
-    roleCode: data.roleCode,
-    roleName: data.roleName,
-    portType: data.portType as any,
-    description: data.description,
-    status: 1,
-    permissions: data.permissions || [],
-  };
-
-  mockRoles.push(newRole);
-  return newRole;
 }
 
 // 更新角色
 export async function updateRole(id: number, data: {
   roleName?: string;
   description?: string;
+  status?: number;
   permissions?: string[];
 }): Promise<Role> {
-  await delay();
-
-  const role = mockRoles.find(r => r.id === id);
-  if (!role) throw new Error('角色不存在');
-
-  if (data.roleName) role.roleName = data.roleName;
-  if (data.description !== undefined) role.description = data.description;
-  if (data.permissions) role.permissions = data.permissions;
-
-  return role;
+  try {
+    const res = await apiClient.put(`/api/roles/${id}`, data);
+    if (res.data.code === 200) {
+      return res.data.data;
+    }
+    throw new Error(res.data.message || '更新角色失败');
+  } catch (error: any) {
+    console.error('[roleService] updateRole error:', error);
+    throw error;
+  }
 }
 
 // 删除角色
 export async function deleteRole(id: number): Promise<void> {
-  await delay();
-
-  const index = mockRoles.findIndex(r => r.id === id);
-  if (index === -1) throw new Error('角色不存在');
-
-  mockRoles.splice(index, 1);
+  try {
+    const res = await apiClient.delete(`/api/roles/${id}`);
+    if (res.data.code !== 200) {
+      throw new Error(res.data.message || '删除角色失败');
+    }
+  } catch (error: any) {
+    console.error('[roleService] deleteRole error:', error);
+    throw error;
+  }
 }

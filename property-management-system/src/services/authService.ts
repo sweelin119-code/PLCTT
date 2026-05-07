@@ -1,6 +1,6 @@
-// ===== 认证服务（Mock 实现）=====
-import type { LoginRequest, LoginResponse, CurrentUser, UserRole } from './types';
-import { mockUsers, mockUserRoles, findRoleById, findOrgById } from './mockData';
+// ===== 认证服务（后端 API 实现）=====
+import type { LoginRequest, LoginResponse, CurrentUser, UserRole, Role, Organization } from './types';
+import apiClient from './apiClient';
 
 const TOKEN_KEY = 'plcct_auth_token';
 const USER_KEY = 'plcct_current_user';
@@ -11,8 +11,127 @@ const USER_KEY = 'plcct_current_user';
  */
 const storage = window.sessionStorage;
 
-// 模拟延迟
-const delay = (ms: number = 300) => new Promise(resolve => setTimeout(resolve, ms));
+// 后端返回的角色数据类型
+interface ApiRole {
+  id: number;
+  roleCode: string;
+  roleName: string;
+  portType: string;
+  description: string;
+  status: number;
+  permissions: string[];
+}
+
+// 后端返回的组织数据类型
+interface ApiOrg {
+  id: number;
+  parentId: number | null;
+  orgType: string;
+  name: string;
+  code: string;
+  contactPerson?: string;
+  contactPhone?: string;
+  address?: string;
+  sortOrder: number;
+  status: number;
+}
+
+// 后端返回的用户角色关联类型
+interface ApiUserRole {
+  id: number;
+  userId: number;
+  roleId: number;
+  orgId: number;
+  portType: string;
+  role: ApiRole | null;
+  org: ApiOrg | null;
+}
+
+// 后端返回的用户类型
+interface ApiUser {
+  id: number;
+  phone: string;
+  realName: string;
+  avatar?: string;
+  status: number;
+  portType: string;
+  manageProjectIds?: number[];
+  createTime: string;
+  roles: ApiUserRole[];
+}
+
+// 后端返回的登录响应
+interface ApiLoginResponse {
+  code: number;
+  message: string;
+  data: {
+    token: string;
+    user: ApiUser;
+  };
+}
+
+// 转换后端角色为前端 Role
+function toRole(apiRole: ApiRole | null): Role | undefined {
+  if (!apiRole) return undefined;
+  return {
+    id: apiRole.id,
+    roleCode: apiRole.roleCode,
+    roleName: apiRole.roleName,
+    portType: apiRole.portType as Role['portType'],
+    description: apiRole.description,
+    status: apiRole.status as 0 | 1,
+    permissions: apiRole.permissions,
+  };
+}
+
+// 转换后端组织为前端 Organization
+function toOrg(apiOrg: ApiOrg | null): Organization | undefined {
+  if (!apiOrg) return undefined;
+  return {
+    id: apiOrg.id,
+    parentId: apiOrg.parentId,
+    orgType: apiOrg.orgType as Organization['orgType'],
+    name: apiOrg.name,
+    code: apiOrg.code,
+    contactPerson: apiOrg.contactPerson,
+    contactPhone: apiOrg.contactPhone,
+    address: apiOrg.address,
+    sortOrder: apiOrg.sortOrder,
+    status: apiOrg.status as 0 | 1,
+  };
+}
+
+// 转换后端用户角色为前端 UserRole
+function toUserRole(apiUr: ApiUserRole): UserRole {
+  return {
+    id: apiUr.id,
+    userId: apiUr.userId,
+    roleId: apiUr.roleId,
+    orgId: apiUr.orgId,
+    portType: apiUr.portType as UserRole['portType'],
+    role: toRole(apiUr.role),
+    org: toOrg(apiUr.org),
+  };
+}
+
+// 转换后端用户为前端 LoginResponse
+function toLoginResponse(apiUser: ApiUser, token: string): LoginResponse {
+  return {
+    token,
+    user: {
+      id: apiUser.id,
+      phone: apiUser.phone,
+      password: '',
+      realName: apiUser.realName,
+      avatar: apiUser.avatar,
+      status: apiUser.status as 0 | 1,
+      portType: apiUser.portType as LoginResponse['user']['portType'],
+      manageProjectIds: apiUser.manageProjectIds,
+      createTime: apiUser.createTime,
+      roles: apiUser.roles.map(toUserRole),
+    },
+  };
+}
 
 // 生成随机验证码
 export function generateCaptcha(): string {
@@ -21,56 +140,35 @@ export function generateCaptcha(): string {
 
 // 登录（增加 port 参数校验账号端口与登录端口是否匹配）
 export async function login(data: LoginRequest, port?: string): Promise<LoginResponse> {
-  await delay(500);
+  const response = await apiClient.post<ApiLoginResponse>('/auth/login', {
+    phone: data.phone,
+    password: data.password,
+    port,
+  });
 
-  const user = mockUsers.find(u => u.phone === data.phone && u.password === data.password);
-  if (!user) {
-    throw new Error('手机号或密码错误');
-  }
-  if (user.status === 0) {
-    throw new Error('账号已被禁用，请联系管理员');
-  }
-
-  // 校验账号端口与登录端口是否匹配
-  // 超级管理员（portType === 'superadmin'）可以登录所有端口，跳过校验
-  if (port && user.portType !== 'superadmin' && user.portType !== port) {
-    throw new Error('该账号不属于当前端口，请切换登录端口');
-  }
-
-  const roles = mockUserRoles
-    .filter(ur => ur.userId === user.id)
-    .map(ur => ({
-      ...ur,
-      role: findRoleById(ur.roleId),
-      org: findOrgById(ur.orgId),
-    }))
-    .filter(ur => ur.role !== undefined) as UserRole[];
-
-  const token = `mock_token_${user.id}_${Date.now()}`;
-
-  const result: LoginResponse = {
-    token,
-    user: { ...user, roles },
-  };
+  const result = response.data.data;
+  const loginResponse = toLoginResponse(result.user, result.token);
 
   // 保存到 sessionStorage（浏览器关闭自动清除）
-  storage.setItem(TOKEN_KEY, token);
-  storage.setItem(USER_KEY, JSON.stringify(result));
+  storage.setItem(TOKEN_KEY, result.token);
+  storage.setItem(USER_KEY, JSON.stringify(loginResponse));
 
-  return result;
+  return loginResponse;
 }
 
 // 登出
 export async function logout(): Promise<void> {
-  await delay(200);
+  try {
+    await apiClient.post('/auth/logout');
+  } catch {
+    // 即使后端请求失败，也清除本地状态
+  }
   storage.removeItem(TOKEN_KEY);
   storage.removeItem(USER_KEY);
 }
 
 // 获取当前登录用户
 export async function getCurrentUser(): Promise<CurrentUser | null> {
-  await delay(100);
-
   const token = storage.getItem(TOKEN_KEY);
   const userStr = storage.getItem(USER_KEY);
 
@@ -79,44 +177,64 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   }
 
   try {
-    const loginResponse: LoginResponse = JSON.parse(userStr);
-    const roles = loginResponse.user.roles.map(ur => ({
-      ...ur,
-      role: findRoleById(ur.roleId),
-      org: findOrgById(ur.orgId),
-    })).filter(ur => ur.role !== undefined) as UserRole[];
+    // 尝试从后端获取最新用户信息
+    const response = await apiClient.get<ApiLoginResponse>('/auth/me');
+    const result = response.data.data;
+    const loginResponse = toLoginResponse(result.user, result.token);
+
+    // 更新缓存
+    storage.setItem(USER_KEY, JSON.stringify(loginResponse));
 
     return {
       user: loginResponse.user,
-      roles,
-      currentRole: roles.length > 0 ? roles[0] : null,
+      roles: loginResponse.user.roles,
+      currentRole: loginResponse.user.roles.length > 0 ? loginResponse.user.roles[0] : null,
       token,
     };
   } catch {
-    return null;
+    // 后端请求失败时，尝试从本地缓存恢复
+    try {
+      const loginResponse: LoginResponse = JSON.parse(userStr);
+      const roles = loginResponse.user.roles;
+      return {
+        user: loginResponse.user,
+        roles,
+        currentRole: roles.length > 0 ? roles[0] : null,
+        token,
+      };
+    } catch {
+      return null;
+    }
   }
 }
 
 // 切换当前角色
 export async function switchRole(roleId: number): Promise<CurrentUser | null> {
-  await delay(200);
+  try {
+    const response = await apiClient.post<ApiLoginResponse>('/auth/switch-role', { roleId });
+    const result = response.data.data;
+    const loginResponse = toLoginResponse(result.user, result.token);
 
-  const current = await getCurrentUser();
-  if (!current) return null;
-
-  const newRole = current.roles.find(r => r.roleId === roleId);
-  if (!newRole) return current;
-
-  current.currentRole = newRole;
-
-  // 更新 sessionStorage
-  const userStr = storage.getItem(USER_KEY);
-  if (userStr) {
-    const loginResponse: LoginResponse = JSON.parse(userStr);
     storage.setItem(USER_KEY, JSON.stringify(loginResponse));
-  }
 
-  return current;
+    const newRole = loginResponse.user.roles.find(r => r.roleId === roleId);
+    return {
+      user: loginResponse.user,
+      roles: loginResponse.user.roles,
+      currentRole: newRole || (loginResponse.user.roles.length > 0 ? loginResponse.user.roles[0] : null),
+      token: loginResponse.token,
+    };
+  } catch {
+    // 后端失败时尝试本地切换
+    const current = await getCurrentUser();
+    if (!current) return null;
+
+    const newRole = current.roles.find(r => r.roleId === roleId);
+    if (!newRole) return current;
+
+    current.currentRole = newRole;
+    return current;
+  }
 }
 
 // 检查是否有权限（同时校验端口匹配）
@@ -136,7 +254,6 @@ export function hasPermission(currentUser: CurrentUser | null, permCode: string)
   }
 
   // 3. 检查权限编码前缀是否与用户端口类型匹配（防止跨端越权）
-  // 例如：government 端用户不能使用 property:staff:add 权限
   const permPrefix = permCode.split(':')[0];
   if (permPrefix && ['government', 'property', 'merchant', 'owner', 'wechat'].includes(permPrefix)) {
     if (permPrefix !== userPortType) {

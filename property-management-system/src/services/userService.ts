@@ -1,206 +1,120 @@
-// ===== 用户管理服务（Mock 实现）=====
-import type { User, UserRole, UserWithRoles, UserStatus, PortType } from './types';
-import { mockUsers, mockUserRoles, findRoleById, findOrgById } from './mockData';
+import apiClient from './apiClient';
+import type { User, UserRole, Role, Organization } from './types';
 
-const delay = (ms: number = 200) => new Promise(resolve => setTimeout(resolve, ms));
+export interface UserWithRoles extends User {
+  roles: (UserRole & { role?: Role; org?: Organization })[];
+}
 
-// 获取用户列表（含角色信息）
+// 获取用户列表
 export async function getUserList(params?: {
   keyword?: string;
-  roleId?: number;
+  portType?: string;
+  status?: number;
   orgId?: number;
-  status?: UserStatus;
-  portType?: PortType;
 }): Promise<UserWithRoles[]> {
-  await delay();
-
-  let filtered = [...mockUsers];
-
-  // 按端口类型筛选
-  if (params?.portType) {
-    filtered = filtered.filter(u => u.portType === params.portType);
+  try {
+    const res = await apiClient.get('/api/users', { params });
+    if (res.data.code === 200) {
+      return res.data.data;
+    }
+    throw new Error(res.data.message || '获取用户列表失败');
+  } catch (error: any) {
+    console.error('[userService] getUserList error:', error);
+    throw error;
   }
-
-  if (params?.keyword) {
-    const kw = params.keyword.toLowerCase();
-    filtered = filtered.filter(u =>
-      u.realName.toLowerCase().includes(kw) || u.phone.includes(kw)
-    );
-  }
-
-  if (params?.status !== undefined) {
-    filtered = filtered.filter(u => u.status === params.status);
-  }
-
-  // 关联角色信息
-  const result: UserWithRoles[] = filtered.map(user => {
-    const roles = mockUserRoles
-      .filter(ur => ur.userId === user.id)
-      .map(ur => ({
-        ...ur,
-        role: findRoleById(ur.roleId),
-        org: findOrgById(ur.orgId),
-      }))
-      .filter(ur => ur.role !== undefined) as UserRole[];
-
-    return { ...user, roles };
-  });
-
-  // 按角色筛选
-  if (params?.roleId) {
-    return result.filter(u => u.roles.some(r => r.roleId === params.roleId));
-  }
-
-  // 按组织筛选
-  if (params?.orgId) {
-    return result.filter(u => u.roles.some(r => r.orgId === params.orgId));
-  }
-
-  return result;
 }
 
-// 根据ID获取用户
+// 获取单个用户
 export async function getUserById(id: number): Promise<UserWithRoles | null> {
-  await delay();
-  const user = mockUsers.find(u => u.id === id);
-  if (!user) return null;
-
-  const roles = mockUserRoles
-    .filter(ur => ur.userId === user.id)
-    .map(ur => ({
-      ...ur,
-      role: findRoleById(ur.roleId),
-      org: findOrgById(ur.orgId),
-    }))
-    .filter(ur => ur.role !== undefined) as UserRole[];
-
-  return { ...user, roles };
+  try {
+    const res = await apiClient.get(`/api/users/${id}`);
+    if (res.data.code === 200) {
+      return res.data.data;
+    }
+    if (res.data.code === 404) return null;
+    throw new Error(res.data.message || '获取用户失败');
+  } catch (error: any) {
+    console.error('[userService] getUserById error:', error);
+    throw error;
+  }
 }
 
-// 新增用户
+// 创建用户
 export async function createUser(data: {
   phone: string;
+  password: string;
   realName: string;
-  roleId: number;
-  orgId: number;
-  portType: PortType;
-  status?: UserStatus;
-  manageProjectIds?: number[];
-}): Promise<UserWithRoles> {
-  await delay();
-
-  // 检查手机号唯一性
-  if (mockUsers.some(u => u.phone === data.phone)) {
-    throw new Error('该手机号已存在');
+  portType: string;
+  roles?: { roleId: number; orgId: number }[];
+  status?: number;
+}): Promise<{ id: number }> {
+  try {
+    const res = await apiClient.post('/api/users', data);
+    if (res.data.code === 200) {
+      return res.data.data;
+    }
+    throw new Error(res.data.message || '创建用户失败');
+  } catch (error: any) {
+    console.error('[userService] createUser error:', error);
+    throw error;
   }
-
-  const newId = Math.max(...mockUsers.map(u => u.id)) + 1;
-  const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-
-  const newUser: User = {
-    id: newId,
-    phone: data.phone,
-    password: data.phone, // 默认密码=手机号
-    realName: data.realName,
-    portType: data.portType,
-    status: data.status ?? 1,
-    manageProjectIds: data.manageProjectIds,
-    createTime: now,
-  };
-
-  mockUsers.push(newUser);
-
-  const newUserRole: UserRole = {
-    id: Math.max(...mockUserRoles.map(ur => ur.id)) + 1,
-    userId: newId,
-    roleId: data.roleId,
-    orgId: data.orgId,
-    portType: data.portType,
-    role: findRoleById(data.roleId),
-    org: findOrgById(data.orgId),
-  };
-
-  mockUserRoles.push(newUserRole);
-
-  return {
-    ...newUser,
-    roles: [newUserRole],
-  };
 }
 
 // 更新用户
 export async function updateUser(id: number, data: {
   realName?: string;
   phone?: string;
-  status?: UserStatus;
-  roleId?: number;
-  orgId?: number;
-  manageProjectIds?: number[];
-}): Promise<UserWithRoles> {
-  await delay();
-
-  const userIndex = mockUsers.findIndex(u => u.id === id);
-  if (userIndex === -1) throw new Error('用户不存在');
-
-  // 检查手机号唯一性
-  if (data.phone && mockUsers.some(u => u.phone === data.phone && u.id !== id)) {
-    throw new Error('该手机号已被其他用户使用');
-  }
-
-  // 更新用户基本信息
-  if (data.realName) mockUsers[userIndex].realName = data.realName;
-  if (data.phone) mockUsers[userIndex].phone = data.phone;
-  if (data.status !== undefined) mockUsers[userIndex].status = data.status;
-  if (data.manageProjectIds !== undefined) mockUsers[userIndex].manageProjectIds = data.manageProjectIds;
-
-  // 更新角色关联
-  if (data.roleId || data.orgId) {
-    const existingRoleIndex = mockUserRoles.findIndex(ur => ur.userId === id);
-    if (existingRoleIndex !== -1) {
-      if (data.roleId) mockUserRoles[existingRoleIndex].roleId = data.roleId;
-      if (data.orgId) mockUserRoles[existingRoleIndex].orgId = data.orgId;
+  portType?: string;
+  status?: number;
+  roles?: { roleId: number; orgId: number }[];
+}): Promise<void> {
+  try {
+    const res = await apiClient.put(`/api/users/${id}`, data);
+    if (res.data.code !== 200) {
+      throw new Error(res.data.message || '更新用户失败');
     }
+  } catch (error: any) {
+    console.error('[userService] updateUser error:', error);
+    throw error;
   }
-
-  return getUserById(id) as Promise<UserWithRoles>;
 }
 
 // 删除用户
 export async function deleteUser(id: number): Promise<void> {
-  await delay();
-
-  const index = mockUsers.findIndex(u => u.id === id);
-  if (index === -1) throw new Error('用户不存在');
-
-  mockUsers.splice(index, 1);
-
-  // 同时删除角色关联
-  const roleIndices = mockUserRoles
-    .map((ur, i) => ur.userId === id ? i : -1)
-    .filter(i => i !== -1)
-    .reverse();
-  for (const i of roleIndices) {
-    mockUserRoles.splice(i, 1);
+  try {
+    const res = await apiClient.delete(`/api/users/${id}`);
+    if (res.data.code !== 200) {
+      throw new Error(res.data.message || '删除用户失败');
+    }
+  } catch (error: any) {
+    console.error('[userService] deleteUser error:', error);
+    throw error;
   }
 }
 
 // 重置密码
 export async function resetPassword(id: number): Promise<void> {
-  await delay();
-
-  const user = mockUsers.find(u => u.id === id);
-  if (!user) throw new Error('用户不存在');
-
-  user.password = user.phone; // 重置为手机号
+  try {
+    const res = await apiClient.put(`/api/users/${id}/reset-password`);
+    if (res.data.code !== 200) {
+      throw new Error(res.data.message || '重置密码失败');
+    }
+  } catch (error: any) {
+    console.error('[userService] resetPassword error:', error);
+    throw error;
+  }
 }
 
 // 切换用户状态
-export async function toggleUserStatus(id: number): Promise<UserStatus> {
-  await delay();
-
-  const user = mockUsers.find(u => u.id === id);
-  if (!user) throw new Error('用户不存在');
-
-  user.status = user.status === 1 ? 0 : 1;
-  return user.status;
+export async function toggleUserStatus(id: number): Promise<'active' | 'disabled'> {
+  try {
+    const res = await apiClient.put(`/api/users/${id}/toggle-status`);
+    if (res.data.code === 200) {
+      return res.data.data.status;
+    }
+    throw new Error(res.data.message || '切换状态失败');
+  } catch (error: any) {
+    console.error('[userService] toggleUserStatus error:', error);
+    throw error;
+  }
 }

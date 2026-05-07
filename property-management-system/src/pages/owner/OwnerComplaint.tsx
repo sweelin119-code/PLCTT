@@ -16,8 +16,8 @@ const OwnerComplaint: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await getComplaintList();
-      setComplaints(data);
+      const result = await getComplaintList();
+      setComplaints(result.list);
     } catch (err) {
       message.error('获取投诉记录失败');
     } finally {

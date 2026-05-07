@@ -334,7 +334,7 @@ const DoorDeviceCard: React.FC<{
       }}
       onClick={() => onClick(device)}
     >
-      <div style={styles.deviceIcon}>{getIcon(device.type)}</div>
+      <div style={styles.deviceIcon}>{getIcon(device.type!)}</div>
       <div style={styles.deviceName}>{device.name}</div>
       <div style={styles.deviceStatus}>
         {device.isOnline ? '在线' : '离线'}
@@ -498,7 +498,7 @@ const DoorAccess: React.FC = () => {
         visitReason: visitReason.trim() || undefined,
         validHours,
       });
-      setGeneratedPassword(result);
+      setGeneratedPassword(result as TempPassword);
     } catch {
       alert('生成临时密码失败');
     } finally {
@@ -698,7 +698,7 @@ const DoorAccess: React.FC = () => {
                   <div style={styles.recordInfo}>
                     <div style={styles.recordDoor}>{record.doorName}</div>
                     <div style={styles.recordMeta}>
-                      {getMethodLabel(record.method)}
+                      {getMethodLabel(record.method!)}
                       {record.ownerName ? ` · ${record.ownerName}` : ''}
                       {record.visitorName ? ` · 访客:${record.visitorName}` : ''}
                       <span style={{ marginLeft: 8 }}>{record.time}</span>

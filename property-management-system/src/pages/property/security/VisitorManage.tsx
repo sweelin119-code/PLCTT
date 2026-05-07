@@ -214,7 +214,7 @@ const VisitorLedgerManage: React.FC<{
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [stats, setStats] = useState<VisitorLedgerStats>({
-    todayCount: 0, monthCount: 0, activeCount: 0, blacklistCount: 0,
+    todayVisitors: 0, currentVisiting: 0, todayLeft: 0, totalThisMonth: 0,
   });
 
   // 筛选条件
@@ -371,12 +371,12 @@ const VisitorLedgerManage: React.FC<{
       width: 200,
       render: (_: any, record: VisitorLedger) => (
         <Space>
-          {record.status === 'entered' && (
+          {record.status === 'visiting' && (
             <Button type="link" size="small" onClick={() => handleMarkLeft(record.id)}>
               标记离开
             </Button>
           )}
-          {!record.isBlacklisted && (
+          {true && (
             <Popconfirm
               title="确定将该访客加入黑名单？"
               onConfirm={() => handleAddBlacklist(record)}
@@ -405,12 +405,12 @@ const VisitorLedgerManage: React.FC<{
         </Col>
         <Col span={6}>
           <Card size="small">
-            <Statistic title="当前在访" value={stats.activeCount} suffix="人" valueStyle={{ color: '#1677ff' }} />
+            <Statistic title="本周访客" value={stats.weekCount} suffix="人" valueStyle={{ color: '#1677ff' }} />
           </Card>
         </Col>
         <Col span={6}>
           <Card size="small">
-            <Statistic title="黑名单" value={stats.blacklistCount} suffix="人" valueStyle={{ color: '#ff4d4f' }} />
+            <Statistic title="累计访客" value={stats.totalCount} suffix="人" valueStyle={{ color: '#ff4d4f' }} />
           </Card>
         </Col>
       </Row>
@@ -536,7 +536,7 @@ const VisitorLedgerManage: React.FC<{
             <Select
               mode="multiple"
               placeholder="请选择门禁"
-              options={doorDevices.filter(d => d.isEnabled).map(d => ({ label: d.name, value: d.id }))}
+              options={doorDevices.filter(d => d.status === 'online' || d.status === 'offline').map(d => ({ label: d.deviceName, value: d.id }))}
             />
           </Form.Item>
           <Form.Item name="plateNo" label="车牌号">

@@ -533,7 +533,7 @@ const OwnerNoticePanel: React.FC<{
               <Tag color={statusConfig[currentAnnouncement.status]?.color}>
                 {statusConfig[currentAnnouncement.status]?.label}
               </Tag>
-              <Tag>{scopeConfig[currentAnnouncement.scope]}</Tag>
+              <Tag>{scopeConfig[currentAnnouncement.scope || '']}</Tag>
             </div>
             <Title level={4}>{currentAnnouncement.title}</Title>
             <div style={{ marginBottom: 16, color: '#999', fontSize: 13 }}>
@@ -551,7 +551,7 @@ const OwnerNoticePanel: React.FC<{
                 <div style={{ marginBottom: 12 }}>
                   <Text strong>已读：{readRecords.length}</Text> / <Text>目标：{currentAnnouncement.totalTarget}</Text>
                   <Text style={{ marginLeft: 16 }}>
-                    阅读率：{((readRecords.length / currentAnnouncement.totalTarget) * 100).toFixed(1)}%
+                    阅读率：{((readRecords.length / (currentAnnouncement.totalTarget || 1)) * 100).toFixed(1)}%
                   </Text>
                 </div>
                 <Table

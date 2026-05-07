@@ -8,7 +8,7 @@ import {
   updateBuilding,
   deleteBuilding,
 } from '../../../services/assetService';
-import type { Building } from '../../../services/assetTypes';
+import type { Building } from '../../../services/assetService';
 
 const BuildingManage: React.FC = () => {
   const { currentCommunity } = useCommunity();

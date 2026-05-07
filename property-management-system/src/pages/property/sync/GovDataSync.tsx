@@ -9,7 +9,6 @@ import {
 import { useCommunity } from '../../../contexts/CommunityContext';
 import { getSyncLogs, triggerSync, getAssetStatistics } from '../../../services/assetService';
 import type { SyncLog } from '../../../services/assetService';
-import type { AssetStatistics } from '../../../services/assetTypes';
 
 const GovDataSync: React.FC = () => {
   const { currentCommunity } = useCommunity();
@@ -18,7 +17,12 @@ const GovDataSync: React.FC = () => {
   const [syncing, setSyncing] = useState(false);
   const [syncModalVisible, setSyncModalVisible] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['building', 'house', 'owner', 'parking']);
-  const [stats, setStats] = useState<AssetStatistics | null>(null);
+  const [stats, setStats] = useState<{
+    buildingCount: number;
+    houseCount: number;
+    ownerCount: number;
+    parkingCount: number;
+  } | null>(null);
 
   const loadLogs = async () => {
     if (!currentCommunity) return;
@@ -37,7 +41,12 @@ const GovDataSync: React.FC = () => {
     if (!currentCommunity) return;
     try {
       const data = await getAssetStatistics(currentCommunity.id);
-      setStats(data);
+      setStats({
+        buildingCount: data.buildingCount,
+        houseCount: data.houseCount,
+        ownerCount: data.ownerCount,
+        parkingCount: data.parkingCount,
+      });
     } catch {
       // ignore
     }

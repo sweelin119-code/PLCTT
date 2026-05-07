@@ -78,7 +78,7 @@ const DocumentManage: React.FC = () => {
   const buildTreeData = (parentId: string | null): any[] => {
     return directories
       .filter(d => d.parentId === parentId)
-      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .sort((a, b) => (a as any).sortOrder - (b as any).sortOrder)
       .map(dir => ({
         key: dir.id,
         title: dir.name,
@@ -180,7 +180,7 @@ const DocumentManage: React.FC = () => {
       key: 'name',
       width: 300,
       render: (text: string, record: InternalFile) => {
-        const cfg = fileTypeConfig[record.fileType] || fileTypeConfig.other;
+        const cfg = fileTypeConfig[record.fileType || 'other'] || fileTypeConfig.other;
         return (
           <Space>
             <span style={{ color: cfg.color, fontSize: 18 }}>{cfg.icon}</span>
@@ -403,9 +403,9 @@ const DocumentManage: React.FC = () => {
       {previewFile && (
         <FilePreview
           visible={previewVisible}
-          fileUrl={previewFile.fileUrl}
+          fileUrl={previewFile.fileUrl || ''}
           fileName={previewFile.name}
-          fileType={previewFile.fileType}
+          fileType={(previewFile.fileType || 'other') as 'pdf' | 'word' | 'excel' | 'image' | 'other'}
           onClose={() => setPreviewVisible(false)}
         />
       )}

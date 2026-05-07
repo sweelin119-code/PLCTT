@@ -35,7 +35,14 @@ const urgencyConfig: Record<string, { color: string; label: string }> = {
 
 const TodoManage: React.FC = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<TodoStats>({
+  const [stats, setStats] = useState<{
+    pendingRepairs: number;
+    pendingComplaints: number;
+    pendingDecorations: number;
+    pendingSuggestions: number;
+    expiringContracts: number;
+    todayInspectTasks: number;
+  }>({
     pendingRepairs: 0, pendingComplaints: 0, pendingDecorations: 0,
     pendingSuggestions: 0, expiringContracts: 0, todayInspectTasks: 0,
   });
@@ -50,7 +57,15 @@ const TodoManage: React.FC = () => {
         getTodoStats(),
         getTodos(),
       ]);
-      setStats(statsData);
+      // 转换 stats 数据
+      setStats({
+        pendingRepairs: statsData.pending,
+        pendingComplaints: statsData.pending,
+        pendingDecorations: statsData.pending,
+        pendingSuggestions: statsData.pending,
+        expiringContracts: statsData.overdue,
+        todayInspectTasks: statsData.pending,
+      });
       setTodos(todosData);
     } finally {
       setLoading(false);
@@ -73,7 +88,7 @@ const TodoManage: React.FC = () => {
 
   const filteredTodos = moduleFilter === 'all'
     ? todos.filter(t => t.status !== 'completed')
-    : todos.filter(t => t.module === moduleFilter && t.status !== 'completed');
+    : todos.filter(t => t.category === moduleFilter && t.status !== 'completed');
 
   const columns = [
     {
@@ -81,8 +96,8 @@ const TodoManage: React.FC = () => {
       dataIndex: 'module',
       key: 'module',
       width: 70,
-      render: (module: string) => {
-        const cfg = moduleConfig[module] || { color: '#999', label: module, icon: null };
+      render: (category: string) => {
+        const cfg = moduleConfig[category] || { color: '#999', label: category, icon: null };
         return <Tag color={cfg.color}>{cfg.label}</Tag>;
       },
     },
@@ -94,8 +109,8 @@ const TodoManage: React.FC = () => {
       render: (text: string, record: TodoItem) => (
         <Space>
           <span>{text}</span>
-          {record.description && (
-            <Tooltip title={record.description}>
+          {record.deadline && (
+            <Tooltip title={`截止日期: ${record.deadline}`}>
               <Text type="secondary" style={{ fontSize: 12, cursor: 'help' }}>ℹ️</Text>
             </Tooltip>
           )}
@@ -103,15 +118,15 @@ const TodoManage: React.FC = () => {
       ),
     },
     {
-      title: '提交人',
-      dataIndex: 'submitter',
-      key: 'submitter',
+      title: '负责人',
+      dataIndex: 'assignee',
+      key: 'assignee',
       width: 80,
     },
     {
-      title: '提交时间',
-      dataIndex: 'submitTime',
-      key: 'submitTime',
+      title: '创建时间',
+      dataIndex: 'createTime',
+      key: 'createTime',
       width: 140,
     },
     {
@@ -141,7 +156,7 @@ const TodoManage: React.FC = () => {
       render: (_: any, record: TodoItem) => (
         <Space>
           <Button type="link" size="small" icon={<RightCircleOutlined />}
-            onClick={() => handleNavigate(record.targetPath)}>
+            onClick={() => handleNavigate('/property/daily/todo')}>
             去处理
           </Button>
           {record.status !== 'completed' && (

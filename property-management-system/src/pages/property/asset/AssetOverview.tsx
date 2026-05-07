@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons';
 import { useCommunity } from '../../../contexts/CommunityContext';
 import { getAssetStatistics, getBuildingStatistics } from '../../../services/assetService';
-import type { AssetStatistics, BuildingStatistics } from '../../../services/assetTypes';
+import type { AssetStatistics, BuildingStatistics } from '../../../services/assetService';
 
 const AssetOverview: React.FC = () => {
   const { currentCommunity } = useCommunity();
@@ -143,7 +143,7 @@ const AssetOverview: React.FC = () => {
                   title="已入住"
                   value={stats.occupiedCount}
                   prefix={<RiseOutlined style={{ color: '#52c41a' }} />}
-                  suffix={`套 / ${stats.occupancyRate}%`}
+                  suffix={`套 / ${stats.occupancyRate ?? 0}%`}
                 />
               </Col>
               <Col span={12}>
@@ -156,9 +156,9 @@ const AssetOverview: React.FC = () => {
               </Col>
             </Row>
             <Progress
-              percent={stats.occupancyRate}
+              percent={stats.occupancyRate ?? 0}
               style={{ marginTop: 12 }}
-              status={stats.occupancyRate >= 80 ? 'success' : 'active'}
+              status={(stats.occupancyRate ?? 0) >= 80 ? 'success' : 'active'}
             />
             <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
               已绑定业主 {stats.boundHouseCount} 套 / 未绑定 {stats.unboundHouseCount} 套
@@ -179,9 +179,9 @@ const AssetOverview: React.FC = () => {
               </Col>
             </Row>
             <Progress
-              percent={stats.parkingUtilizationRate}
+              percent={stats.parkingUtilizationRate ?? 0}
               style={{ marginTop: 12 }}
-              status={stats.parkingUtilizationRate >= 70 ? 'success' : 'active'}
+              status={(stats.parkingUtilizationRate ?? 0) >= 70 ? 'success' : 'active'}
             />
           </Card>
         </Col>

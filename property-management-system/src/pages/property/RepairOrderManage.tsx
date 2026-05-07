@@ -33,9 +33,16 @@ const RepairOrderManage: React.FC = () => {
         status: filterStatus !== 'all' ? filterStatus : undefined,
         repairType: filterType !== 'all' ? filterType : undefined,
       });
-      setOrders(data);
+      setOrders(data.list);
       const s = await getRepairStats();
-      setStats(s);
+      setStats({
+        total: s.total,
+        pendingAssign: s.pendingAssign,
+        inProgress: s.inProgress,
+        completed: s.completed,
+        closed: 0,
+        urgentCount: 0,
+      });
     } catch (err) {
       message.error('获取工单列表失败');
     } finally {

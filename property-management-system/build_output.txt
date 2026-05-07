@@ -1,0 +1,14 @@
+Creating an optimized production build...
+Failed to compile.
+
+TS2345: Argument of type '{ total: number; pendingAccept: number; processing: number; closed: number; urgentCount: number; satisfactionAvg: number; categoryStats: { category: string; count: number; }[]; }' is not assignable to parameter of type 'SetStateAction<{ total: number; pendingAccept: number; processing: number; closed: number; categoryStats: { category: string; count: number; }[]; }>'.
+  Object literal may only specify known properties, and 'urgentCount' does not exist in type 'SetStateAction<{ total: number; pendingAccept: number; processing: number; closed: number; categoryStats: { category: string; count: number; }[]; }>'.
+  [0m [90m 39 |[39m         processing[33m:[39m s[33m.[39maccepted [33m+[39m s[33m.[39massigned [33m+[39m s[33m.[39mprocessing [33m+[39m s[33m.[39mfeedback[33m,[39m
+   [90m 40 |[39m         closed[33m:[39m s[33m.[39mclosed[33m,[39m
+  [31m[1m>[22m[39m[90m 41 |[39m         urgentCount[33m:[39m [35m0[39m[33m,[39m
+   [90m    |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 42 |[39m         satisfactionAvg[33m:[39m avgSat[33m,[39m
+   [90m 43 |[39m         categoryStats[33m:[39m s[33m.[39mcategoryStats [33m||[39m [][33m,[39m
+   [90m 44 |[39m       })[33m;[39m[0m
+
+

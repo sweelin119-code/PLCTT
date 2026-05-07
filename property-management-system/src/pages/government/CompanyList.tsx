@@ -24,7 +24,6 @@ const CompanyList: React.FC = () => {
     try {
       const data = await getCompanyList({
         keyword: keyword || undefined,
-        qualLevel: (qualLevel as QualLevel) || undefined,
       });
       setCompanies(data);
     } finally {

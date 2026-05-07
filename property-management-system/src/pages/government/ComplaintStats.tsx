@@ -3,6 +3,7 @@ import { Card, Row, Col, Statistic, Table, Tag, Rate, Progress } from 'antd';
 import { FileTextOutlined, ClockCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined, SmileOutlined, FrownOutlined, MehOutlined } from '@ant-design/icons';
 import { getComplaintList, getComplaintStats, complaintCategoryMap } from '../../services/complaintService';
 import type { Complaint, ComplaintCategory } from '../../services/types';
+import type { ComplaintStatus } from '../../services/types';
 
 const ComplaintStats: React.FC = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -10,16 +11,31 @@ const ComplaintStats: React.FC = () => {
   const [stats, setStats] = useState({
     total: 0, pendingAccept: 0, processing: 0, closed: 0,
     urgentCount: 0, satisfactionAvg: 0,
-    categoryStats: [] as { category: ComplaintCategory; count: number }[],
+    categoryStats: [] as { category: string; count: number }[],
   });
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await getComplaintList();
-      setComplaints(data);
+      const result = await getComplaintList();
+      setComplaints(result.list);
       const s = await getComplaintStats();
-      setStats(s);
+      // 计算平均满意度
+      const closedComplaints = result.list.filter((c: Complaint) => c.status === 'closed' && c.satisfaction);
+      const avgSat = closedComplaints.length > 0
+        ? Math.round((closedComplaints.reduce((sum: number, c: Complaint) => sum + (c.satisfaction || 0), 0) / closedComplaints.length) * 10) / 10
+        : 0;
+      // 计算紧急投诉数量
+      const urgentCount = result.list.filter((c: Complaint) => c.urgency === 'emergency').length;
+      setStats({
+        total: s.total,
+        pendingAccept: s.pendingAccept,
+        processing: s.accepted + s.assigned + s.processing + s.feedback,
+        closed: s.closed,
+        urgentCount,
+        satisfactionAvg: avgSat,
+        categoryStats: s.categoryStats || [],
+      });
     } catch (err) {
       console.error(err);
     } finally {
@@ -139,7 +155,7 @@ const ComplaintStats: React.FC = () => {
                   title: '投诉分类',
                   dataIndex: 'category',
                   key: 'category',
-                  render: (cat: ComplaintCategory) => complaintCategoryMap[cat] || cat,
+                  render: (cat: string) => complaintCategoryMap[cat as ComplaintCategory] || cat,
                 },
                 {
                   title: '数量',
@@ -151,7 +167,7 @@ const ComplaintStats: React.FC = () => {
                   title: '占比',
                   key: 'percent',
                   width: 200,
-                  render: (_: any, record: { category: ComplaintCategory; count: number }) => (
+                  render: (_: any, record: { category: string; count: number }) => (
                     <Progress
                       percent={Math.round((record.count / totalCount) * 100)}
                       size="small"

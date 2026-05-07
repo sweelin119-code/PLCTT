@@ -82,20 +82,17 @@ const StaffEdit: React.FC = () => {
           realName: values.realName,
           phone: values.phone,
           status: values.status ? 1 : 0,
-          roleId: values.roleId,
-          orgId: values.orgId,
-          manageProjectIds: values.manageProjectIds,
+          roles: [{ roleId: values.roleId, orgId: values.orgId }],
         });
         message.success('修改成功');
       } else {
         await createUser({
           phone: values.phone,
+          password: values.phone,
           realName: values.realName,
-          roleId: values.roleId,
-          orgId: values.orgId,
           portType,
           status: values.status ? 1 : 0,
-          manageProjectIds: values.manageProjectIds,
+          roles: [{ roleId: values.roleId, orgId: values.orgId }],
         });
         message.success('新增成功');
       }

@@ -1,0 +1,13 @@
+Creating an optimized production build...
+Failed to compile.
+
+TS18048: 'stats.occupancyRate' is possibly 'undefined'.
+  [0m [90m 159 |[39m               percent[33m=[39m{stats[33m.[39moccupancyRate}
+   [90m 160 |[39m               style[33m=[39m{{ marginTop[33m:[39m [35m12[39m }}
+  [31m[1m>[22m[39m[90m 161 |[39m               status[33m=[39m{stats[33m.[39moccupancyRate [33m>=[39m [35m80[39m [33m?[39m [32m'success'[39m [33m:[39m [32m'active'[39m}
+   [90m     |[39m                       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 162 |[39m             [33m/[39m[33m>[39m
+   [90m 163 |[39m             [33m<[39m[33mdiv[39m style[33m=[39m{{ marginTop[33m:[39m [35m8[39m[33m,[39m color[33m:[39m [32m'#999'[39m[33m,[39m fontSize[33m:[39m [35m12[39m }}[33m>[39m
+   [90m 164 |[39m               已绑定业主 {stats[33m.[39mboundHouseCount} 套 [33m/[39m 未绑定 {stats[33m.[39munboundHouseCount} 套[0m
+
+

@@ -20,7 +20,7 @@ import {
   unbindOwner,
   getOwnerChangeHistory,
 } from '../../../services/assetService';
-import type { Building, BuildingUnit, House, Owner } from '../../../services/assetTypes';
+import type { Building, BuildingUnit, House, Owner } from '../../../services/assetService';
 import type { BatchGenerateParams } from '../../../services/assetService';
 
 const HouseManage: React.FC = () => {

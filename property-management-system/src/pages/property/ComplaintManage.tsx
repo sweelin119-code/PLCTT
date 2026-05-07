@@ -38,9 +38,17 @@ const ComplaintManage: React.FC = () => {
         status: filterStatus !== 'all' ? filterStatus : undefined,
         category: filterCategory !== 'all' ? filterCategory : undefined,
       });
-      setComplaints(data);
+      setComplaints(data.list);
       const s = await getComplaintStats();
-      setStats(s);
+      setStats({
+        total: s.total,
+        pendingAccept: s.pendingAccept,
+        processing: s.processing,
+        closed: s.closed,
+        urgentCount: 0,
+        satisfactionAvg: 0,
+        categoryStats: s.categoryStats.map(c => ({ category: c.category as ComplaintCategory, count: c.count })),
+      });
     } catch (err) {
       message.error('获取投诉列表失败');
     } finally {

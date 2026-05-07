@@ -14,21 +14,34 @@ const ComplaintSupervise: React.FC = () => {
   const [detailData, setDetailData] = useState<Complaint | null>(null);
   const [superviseVisible, setSuperviseVisible] = useState(false);
   const [superviseData, setSuperviseData] = useState<Complaint | null>(null);
-  const [stats, setStats] = useState({ total: 0, pendingAccept: 0, processing: 0, closed: 0, urgentCount: 0, satisfactionAvg: 0, categoryStats: [] as { category: ComplaintCategory; count: number }[] });
+  const [stats, setStats] = useState({ total: 0, pendingAccept: 0, processing: 0, closed: 0, urgentCount: 0, satisfactionAvg: 0, categoryStats: [] as { category: string; count: number }[] });
   const [activeTab, setActiveTab] = useState<string>('all');
   const [superviseForm] = Form.useForm();
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await getComplaintList({
+      const result = await getComplaintList({
         keyword: keyword || undefined,
         status: filterStatus !== 'all' ? filterStatus : undefined,
         category: filterCategory !== 'all' ? filterCategory : undefined,
       });
-      setComplaints(data);
+      setComplaints(result.list);
       const s = await getComplaintStats();
-      setStats(s);
+      // 计算平均满意度
+      const closedComplaints = result.list.filter((c: Complaint) => c.status === 'closed' && c.satisfaction);
+      const avgSat = closedComplaints.length > 0
+        ? Math.round((closedComplaints.reduce((sum: number, c: Complaint) => sum + (c.satisfaction || 0), 0) / closedComplaints.length) * 10) / 10
+        : 0;
+      setStats({
+        total: s.total,
+        pendingAccept: s.pendingAccept,
+        processing: s.accepted + s.assigned + s.processing + s.feedback,
+        closed: s.closed,
+        urgentCount: 0,
+        satisfactionAvg: avgSat,
+        categoryStats: s.categoryStats || [],
+      });
     } catch (err) {
       message.error('获取投诉列表失败');
     } finally {
@@ -63,9 +76,9 @@ const ComplaintSupervise: React.FC = () => {
     try {
       const values = await superviseForm.validateFields();
       await superviseComplaint(superviseData.id, {
-        supervisor: values.supervisor,
-        remark: values.remark,
-        deadline: values.deadline.format('YYYY-MM-DD'),
+        governmentSupervisor: values.supervisor,
+        governmentRemark: values.remark,
+        governmentDeadline: values.deadline.format('YYYY-MM-DD'),
       });
       message.success('督办成功');
       setSuperviseVisible(false);

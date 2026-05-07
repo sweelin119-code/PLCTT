@@ -63,7 +63,7 @@ const StaffList: React.FC = () => {
     setLoading(true);
     try {
       const [userData, roleData, projectData] = await Promise.all([
-        getUserList({ keyword: keyword || undefined, roleId: filterRole, orgId: filterProject, portType }),
+        getUserList({ keyword: keyword || undefined, orgId: filterProject, portType }),
         getRolesByPortType(portType),
         getProjectList(),
       ]);
@@ -75,7 +75,7 @@ const StaffList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [keyword, filterRole, filterProject, portType]);
+  }, [keyword, filterProject, portType]);
 
   useEffect(() => {
     fetchData();
@@ -98,7 +98,7 @@ const StaffList: React.FC = () => {
   const handleToggleStatus = async (id: number) => {
     try {
       const newStatus = await toggleUserStatus(id);
-      message.success(newStatus === 1 ? '已启用' : '已禁用');
+      message.success(newStatus === 'active' ? '已启用' : '已禁用');
       fetchData();
     } catch (err: any) {
       message.error(err.message || '操作失败');
@@ -305,7 +305,7 @@ const StaffList: React.FC = () => {
       <Card
         title={
           <Space>
-            <span>账号列表</span>
+            <span>账号管理</span>
             <Tag color="blue">{portNameMap[portType] || portType}</Tag>
             <span style={{ fontSize: 13, color: '#999', fontWeight: 400 }}>
               共 {users.length} 人

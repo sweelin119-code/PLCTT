@@ -19,8 +19,8 @@ const OwnerRepair: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await getRepairOrderList();
-      setOrders(data);
+      const result = await getRepairOrderList();
+      setOrders(result.list);
     } catch (err) {
       message.error('获取报修记录失败');
     } finally {

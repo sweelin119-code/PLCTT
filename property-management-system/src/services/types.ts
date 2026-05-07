@@ -10,6 +10,26 @@ export type PortType = 'government' | 'property' | 'merchant' | 'owner' | 'wecha
 // 用户状态
 export type UserStatus = 0 | 1; // 0=禁用 1=启用
 
+// 员工状态
+export type EmployeeStatus = 'active' | 'resigned' | 'leave';
+
+// 员工档案
+export interface EmployeeProfile {
+  id: number;
+  userId: number | null;       // 关联的账号ID（可选，支持无账号员工）
+  employeeNo: string;          // 员工编号
+  realName: string;            // 姓名
+  phone: string;               // 手机号
+  department: string;          // 所属部门
+  position: string;            // 岗位
+  entryDate: string;           // 入职日期
+  skillTags: string[];         // 技能标签
+  canSchedule: boolean;        // 是否参与值班排班
+  status: EmployeeStatus;      // 状态
+  createdAt: string;
+  updatedAt: string;
+}
+
 // 组织
 export interface Organization {
   id: number;

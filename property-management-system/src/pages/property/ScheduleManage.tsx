@@ -34,7 +34,7 @@ const shiftConfig: Record<string, { color: string; label: string }> = {
 const shiftOrder = ['morning', 'afternoon', 'night'];
 
 const ScheduleManage: React.FC = () => {
-  const [staffList, setStaffList] = useState<{ id: string; name: string }[]>([]);
+  const [staffList, setStaffList] = useState<{ id: number; name: string }[]>([]);
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([]);
   const [schedules, setSchedules] = useState<DutySchedule[]>([]);
   const [handovers, setHandovers] = useState<HandoverRecord[]>([]);
@@ -56,8 +56,8 @@ const ScheduleManage: React.FC = () => {
   const [cellModalVisible, setCellModalVisible] = useState(false);
   const [cellDate, setCellDate] = useState<string>('');
   const [cellShift, setCellShift] = useState<string>('morning');
-  const [cellStaffIds, setCellStaffIds] = useState<string[]>([]);
-  const [cellLeaderId, setCellLeaderId] = useState<string>('');
+  const [cellStaffIds, setCellStaffIds] = useState<number[]>([]);
+  const [cellLeaderId, setCellLeaderId] = useState<number>(0);
 
   const fetchData = async () => {
     try {
@@ -123,7 +123,7 @@ const ScheduleManage: React.FC = () => {
       setCellLeaderId(existing.leaderId);
     } else {
       setCellStaffIds([]);
-      setCellLeaderId('');
+      setCellLeaderId(0);
     }
     setCellModalVisible(true);
   };

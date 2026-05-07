@@ -10,7 +10,6 @@ import {
   getAssetStatistics,
 } from '../../../services/assetService';
 import type { Organization } from '../../../services/types';
-import type { AssetStatistics } from '../../../services/assetTypes';
 
 /**
  * 政府监管端 - 资产查看页面
@@ -19,7 +18,19 @@ import type { AssetStatistics } from '../../../services/assetTypes';
 const GovernmentAssetView: React.FC = () => {
   const [communities, setCommunities] = useState<Organization[]>([]);
   const [selectedCommunity, setSelectedCommunity] = useState<number | null>(null);
-  const [stats, setStats] = useState<AssetStatistics | null>(null);
+  const [stats, setStats] = useState<{
+    buildingCount: number;
+    houseCount: number;
+    occupiedCount: number;
+    vacantCount: number;
+    parkingCount: number;
+    soldRentedParkingCount: number;
+    parkingUtilizationRate: number;
+    ownerCount: number;
+    boundHouseCount: number;
+    unboundHouseCount: number;
+    dataSource: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
 
   // 加载小区列表
@@ -37,7 +48,20 @@ const GovernmentAssetView: React.FC = () => {
     if (!selectedCommunity) return;
     setLoading(true);
     getAssetStatistics(selectedCommunity).then(data => {
-      setStats(data);
+      // 转换 assetService 返回的统计格式为组件使用的格式
+      setStats({
+        buildingCount: data.buildingCount,
+        houseCount: data.houseCount,
+        occupiedCount: data.occupiedCount,
+        vacantCount: data.vacantCount,
+        parkingCount: data.parkingCount,
+        soldRentedParkingCount: data.soldRentedParkingCount,
+        parkingUtilizationRate: data.parkingCount > 0 ? data.soldRentedParkingCount / data.parkingCount : 0,
+        ownerCount: data.ownerCount,
+        boundHouseCount: data.boundHouseCount,
+        unboundHouseCount: data.unboundHouseCount,
+        dataSource: 'gov_sync',
+      });
       setLoading(false);
     });
   }, [selectedCommunity]);

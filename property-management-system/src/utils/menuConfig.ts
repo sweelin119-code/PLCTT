@@ -375,6 +375,7 @@ export const propertyMenus: MenuItem[] = [
     icon: 'TeamOutlined',
     children: [
       { key: 'staff-archive', label: '员工档案', path: '/property/staff/archive' },
+      { key: 'staff-position', label: '岗位管理', path: '/property/staff/position' },
       { key: 'staff-attendance', label: '考勤管理', path: '/property/staff/attendance' },
       { key: 'staff-performance', label: '绩效考核', path: '/property/staff/performance' },
     ]

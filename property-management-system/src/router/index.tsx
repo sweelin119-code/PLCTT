@@ -38,6 +38,8 @@ import ParkingShare from '../pages/owner/ParkingShare';
 import OwnerVotePage from '../pages/owner/VotePage';
 import AssemblyResolution from '../pages/property/AssemblyResolution';
 import NoticeManage from '../pages/property/NoticeManage';
+import EmployeeManage from '../pages/property/EmployeeManage';
+import PositionManage from '../pages/property/PositionManage';
 
 import ScheduleManage from '../pages/property/ScheduleManage';
 import TodoManage from '../pages/property/TodoManage';
@@ -362,7 +364,8 @@ const router = createBrowserRouter([
       { path: 'daily/assembly-resolution', element: <AssemblyResolution /> },
 
       // 员工管理（原人员管理改名）
-      { path: 'staff/archive', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>员工档案 - 开发中</div> },
+      { path: 'staff/archive', element: <EmployeeManage /> },
+      { path: 'staff/position', element: <PositionManage /> },
       { path: 'staff/attendance', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>考勤管理 - 开发中</div> },
       { path: 'staff/performance', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>绩效考核 - 开发中</div> },
 

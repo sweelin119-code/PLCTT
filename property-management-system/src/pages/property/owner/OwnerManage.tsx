@@ -13,7 +13,7 @@ import {
   deleteOwner,
   getAllOwnerTags,
 } from '../../../services/assetService';
-import type { Owner } from '../../../services/assetTypes';
+import type { Owner } from '../../../services/assetService';
 import dayjs from 'dayjs';
 
 const OwnerManage: React.FC = () => {
@@ -44,8 +44,8 @@ const OwnerManage: React.FC = () => {
       const result = await getOwners({
         projectId: currentCommunity.id,
         keyword: keyword || undefined,
-        tag: filterTag,
-        dataSource: filterDataSource as any,
+        tags: filterTag ? [filterTag] : undefined,
+        status: filterDataSource as any,
         page,
         pageSize,
       });
