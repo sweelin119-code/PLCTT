@@ -291,7 +291,82 @@ export async function getReadRecords(announcementId: string): Promise<ReadRecord
   }
 }
 
-// ===== 文件管理 =====
+// =============================================================
+//  通知/消息系统
+// =============================================================
+
+export interface NotificationItem {
+  id: string;
+  title: string;
+  content: string;
+  type: string;
+  priority: string;
+  isTop: boolean;
+  source: string;
+  publishTime: string;
+  createTime: string;
+  createdBy: string;
+  isRead?: boolean;
+}
+
+export interface UnreadCount {
+  count: number;
+}
+
+// GET /api/daily/announcements/recent - 获取最近通知列表
+export async function getRecentNotifications(limit: number = 5): Promise<NotificationItem[]> {
+  try {
+    const res = await apiClient.get('/api/daily/announcements/recent', { params: { limit } });
+    if (res.data.code === 200) return res.data.data;
+    throw new Error(res.data.message);
+  } catch {
+    return [];
+  }
+}
+
+// GET /api/daily/announcements/unread-count - 未读通知数量
+export async function getUnreadCount(): Promise<number> {
+  try {
+    const res = await apiClient.get('/api/daily/announcements/unread-count');
+    if (res.data.code === 200) return res.data.data.count;
+    throw new Error(res.data.message);
+  } catch {
+    return 0;
+  }
+}
+
+// POST /api/daily/announcements/:id/read - 标记为已读
+export async function markNotificationRead(id: string): Promise<void> {
+  try {
+    await apiClient.post(`/api/daily/announcements/${id}/read`);
+  } catch (error) {
+    console.error('[dailyService] markNotificationRead error:', error);
+  }
+}
+
+// GET /api/daily/announcements/owner - 业主端通知列表
+export async function getOwnerNotifications(): Promise<NotificationItem[]> {
+  try {
+    const res = await apiClient.get('/api/daily/announcements/owner');
+    if (res.data.code === 200) return res.data.data;
+    throw new Error(res.data.message);
+  } catch {
+    return [];
+  }
+}
+
+// POST /api/daily/announcements/:id/owner-read - 业主标记阅读
+export async function markOwnerNotificationRead(id: string, readerName?: string, readerPhone?: string): Promise<void> {
+  try {
+    await apiClient.post(`/api/daily/announcements/${id}/owner-read`, { readerName, readerPhone });
+  } catch (error) {
+    console.error('[dailyService] markOwnerNotificationRead error:', error);
+  }
+}
+
+// =============================================================
+//  文件管理
+// =============================================================
 export async function getDirectories(): Promise<FileDirectory[]> {
   try {
     const res = await apiClient.get('/api/daily/files/directories');
@@ -321,9 +396,11 @@ export async function deleteDirectory(id: string): Promise<void> {
   }
 }
 
-export async function getFiles(directoryId?: string): Promise<InternalFile[]> {
+export async function getFiles(directoryId?: string, search?: string): Promise<InternalFile[]> {
   try {
-    const params = directoryId ? { directoryId } : {};
+    const params: Record<string, string> = {};
+    if (directoryId) params.directoryId = directoryId;
+    if (search && search.trim()) params.search = search.trim();
     const res = await apiClient.get('/api/daily/files', { params });
     if (res.data.code === 200) return res.data.data;
     throw new Error(res.data.message);

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Breadcrumb, theme, Select, Space, message, Modal } from 'antd';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Layout, Menu, Avatar, Dropdown, Breadcrumb, theme, Select, Space, message, Modal, Badge, List, Divider, Button } from 'antd';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -16,6 +16,7 @@ import { useCommunity } from '../contexts/CommunityContext';
 import { useAuth } from '../contexts/AuthContext';
 import { TabProvider, useTabs } from '../contexts/TabContext';
 import TabBar from '../components/TabBar';
+import { getRecentNotifications, getUnreadCount, markNotificationRead } from '../services/dailyService';
 
 const { Header, Sider, Content } = Layout;
 
@@ -58,6 +59,40 @@ const PCLayoutInner: React.FC<PCLayoutProps> = ({ menuItems, title, subTitle, sh
   const { currentCommunity, communityList, switchCommunity } = useCommunity();
   const { currentUser, logout } = useAuth();
   const { addTab } = useTabs();
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const [list, count] = await Promise.all([
+        getRecentNotifications(5),
+        getUnreadCount(),
+      ]);
+      setNotifications(list);
+      setUnreadCount(count);
+    } catch (e) {
+      // 静默失败，不影响正常使用
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const timer = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(timer);
+  }, [fetchNotifications]);
+
+  const handleNotificationClick = async (item: any) => {
+    try {
+      await markNotificationRead(item.id);
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, isRead: true } : n));
+    } catch (e) {
+      // ignore
+    }
+    setNotifOpen(false);
+    navigate('/property/daily/notice');
+  };
 
   // 扁平化菜单项，用于获取标签页标题
   const menuLabelMap = useMemo(() => flattenMenuItems(menuItems), [menuItems]);
@@ -242,7 +277,42 @@ const PCLayoutInner: React.FC<PCLayoutProps> = ({ menuItems, title, subTitle, sh
                 }))}
               />
             )}
-            <BellOutlined style={{ fontSize: 18, cursor: 'pointer' }} />
+            <Dropdown
+              open={notifOpen}
+              onOpenChange={setNotifOpen}
+              dropdownRender={() => (
+                <div style={{ width: 360, maxHeight: 480, background: '#fff', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden' }}>
+                  <List
+                    dataSource={notifications}
+                    renderItem={(item: any) => (
+                      <List.Item
+                        onClick={() => handleNotificationClick(item)}
+                        style={{ cursor: 'pointer', padding: '10px 16px', borderBottom: '1px solid #f0f0f0', ...(!item.isRead ? { background: '#f0f5ff' } : {}) }}
+                      >
+                        <List.Item.Meta
+                          title={<span style={{ fontWeight: item.isRead ? 'normal' : 'bold', fontSize: 14 }}>{item.title}</span>}
+                          description={<span style={{ fontSize: 12, color: '#999' }}>{item.publishTime}</span>}
+                        />
+                        {!item.isRead && <Badge status="processing" />}
+                      </List.Item>
+                    )}
+                    locale={{ emptyText: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>暂无新通知</div> }}
+                  />
+                  <Divider style={{ margin: 0 }} />
+                  <div style={{ textAlign: 'center', padding: '8px 0' }}>
+                    <Button type="link" onClick={() => { setNotifOpen(false); navigate('/property/daily/notice'); }}>
+                      查看全部通知
+                    </Button>
+                  </div>
+                </div>
+              )}
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Badge count={unreadCount} size="small" offset={[-2, 2]}>
+                <BellOutlined style={{ fontSize: 18, cursor: 'pointer' }} />
+              </Badge>
+            </Dropdown>
             <Dropdown menu={{ items: userMenuItems, onClick: handleUserMenuClick }} placement="bottomRight">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                 <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1890ff' }} />

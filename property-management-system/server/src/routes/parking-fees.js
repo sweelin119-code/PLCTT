@@ -126,6 +126,43 @@ router.get('/entries', authenticate, async (req, res) => {
   }
 });
 
+// POST /api/parking-fee/entries - 车辆入场登记
+router.post('/entries', authenticate, async (req, res) => {
+  try {
+    const { projectId, plateNo, vehicleType, entrance, remark } = req.body;
+    if (!projectId || !plateNo) {
+      return res.status(400).json({ code: 400, message: '项目ID和车牌号不能为空' });
+    }
+    // 检查该车辆是否已在场
+    const [exists] = await pool.query(
+      "SELECT id FROM parking_entry_records WHERE project_id = ? AND plate_no = ? AND status = 'parked'",
+      [projectId, plateNo]
+    );
+    if (exists.length > 0) {
+      return res.status(400).json({ code: 400, message: '该车辆已在场内，请勿重复入场登记' });
+    }
+
+    // 查询收费标准，计算预计费用
+    const [rules] = await pool.query(
+      "SELECT id, rate_type, unit_price, free_minutes, daily_cap, monthly_price FROM parking_fee_rules WHERE project_id = ? AND vehicle_type = ? AND status = 'active' ORDER BY sort_order ASC LIMIT 1",
+      [projectId, vehicleType || 'car']
+    );
+    const rule = rules.length > 0 ? rules[0] : null;
+    const fee = rule ? rule.unit_price : 0;
+
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const [result] = await pool.execute(
+      'INSERT INTO parking_entry_records (project_id, plate_no, vehicle_type, entry_time, entrance, fee, status, remark, operator) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [projectId, plateNo, vehicleType || 'car', now, entrance || '北门入口', fee, 'parked', remark || null, req.user?.username || '']
+    );
+    const [rows] = await pool.query('SELECT * FROM parking_entry_records WHERE id = ?', [result.insertId]);
+    res.json({ code: 200, data: rows[0] });
+  } catch (err) {
+    console.error('[parking-fee] createParkingEntry error:', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
 // PUT /api/parking-fee/entries/:id/exit - 车辆出场收费
 router.put('/entries/:id/exit', authenticate, async (req, res) => {
   try {

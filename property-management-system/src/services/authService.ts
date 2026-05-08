@@ -140,13 +140,26 @@ export function generateCaptcha(): string {
 
 // 登录（增加 port 参数校验账号端口与登录端口是否匹配）
 export async function login(data: LoginRequest, port?: string): Promise<LoginResponse> {
-  const response = await apiClient.post<ApiLoginResponse>('/auth/login', {
+  // port 作为查询参数传递，以匹配后端 req.query.port 的读取方式
+  const queryParams = port ? `?port=${encodeURIComponent(port)}` : '';
+  const response = await apiClient.post<ApiLoginResponse>(`/auth/login${queryParams}`, {
     phone: data.phone,
     password: data.password,
-    port,
   });
 
-  const result = response.data.data;
+  const resData = response.data;
+
+  // 检查后端业务状态码：后端以 HTTP 200 返回业务错误时，code !== 200
+  if (resData.code !== 200) {
+    throw new Error(resData.message || '登录失败，请稍后重试');
+  }
+
+  // 安全校验 data 字段是否存在
+  if (!resData.data || !resData.data.token || !resData.data.user) {
+    throw new Error('登录响应数据异常，请联系管理员');
+  }
+
+  const result = resData.data;
   const loginResponse = toLoginResponse(result.user, result.token);
 
   // 保存到 sessionStorage（浏览器关闭自动清除）
@@ -179,7 +192,24 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   try {
     // 尝试从后端获取最新用户信息
     const response = await apiClient.get<ApiLoginResponse>('/auth/me');
-    const result = response.data.data;
+    const resData = response.data;
+
+    // 检查业务状态码
+    if (resData.code !== 200) {
+      // token 无效或已过期，清除本地缓存
+      storage.removeItem(TOKEN_KEY);
+      storage.removeItem(USER_KEY);
+      return null;
+    }
+
+    // 安全校验 data 字段
+    if (!resData.data || !resData.data.user) {
+      storage.removeItem(TOKEN_KEY);
+      storage.removeItem(USER_KEY);
+      return null;
+    }
+
+    const result = resData.data;
     const loginResponse = toLoginResponse(result.user, result.token);
 
     // 更新缓存
@@ -192,7 +222,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       token,
     };
   } catch {
-    // 后端请求失败时，尝试从本地缓存恢复
+    // 后端请求失败时（网络错误等），尝试从本地缓存恢复
     try {
       const loginResponse: LoginResponse = JSON.parse(userStr);
       const roles = loginResponse.user.roles;
@@ -203,6 +233,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
         token,
       };
     } catch {
+      storage.removeItem(TOKEN_KEY);
+      storage.removeItem(USER_KEY);
       return null;
     }
   }
@@ -212,7 +244,18 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 export async function switchRole(roleId: number): Promise<CurrentUser | null> {
   try {
     const response = await apiClient.post<ApiLoginResponse>('/auth/switch-role', { roleId });
-    const result = response.data.data;
+    const resData = response.data;
+
+    // 检查业务状态码
+    if (resData.code !== 200) {
+      throw new Error(resData.message || '切换角色失败');
+    }
+
+    if (!resData.data || !resData.data.user) {
+      throw new Error('切换角色响应数据异常');
+    }
+
+    const result = resData.data;
     const loginResponse = toLoginResponse(result.user, result.token);
 
     storage.setItem(USER_KEY, JSON.stringify(loginResponse));

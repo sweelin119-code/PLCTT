@@ -194,6 +194,21 @@ export interface DoorPermission {
   createTime: string;
 }
 
+// ===== 开门记录统计 =====
+export interface AccessStats {
+  todayStats: {
+    total: number;
+    successCount: number;
+    failedCount: number;
+    expiredCount: number;
+  };
+  methodDistribution: { access_type: string; count: number }[];
+  hourlyTrend: { hour: number; total: number; successCount: number }[];
+  dailyTrend: { date: string; total: number; successCount: number; failedCount: number }[];
+  weeklyTrend: { date: string; total: number; successCount: number }[];
+  deviceRanking: { device_name: string; device_code: string; total: number; successCount: number }[];
+}
+
 // ===== 门禁设备（业主端）=====
 export async function getDoorDevices(): Promise<DoorDevice[]> {
   try {
@@ -328,6 +343,23 @@ export async function deleteDoorDevice(id: number): Promise<void> {
   } catch (error: any) {
     console.error('[accessService] deleteDoorDevice error:', error);
     throw error;
+  }
+}
+
+export async function getAccessStats(): Promise<AccessStats> {
+  try {
+    const res = await apiClient.get('/api/access/manage/records/stats');
+    if (res.data.code === 200) return res.data.data;
+    throw new Error(res.data.message);
+  } catch {
+    return {
+      todayStats: { total: 0, successCount: 0, failedCount: 0, expiredCount: 0 },
+      methodDistribution: [],
+      hourlyTrend: [],
+      dailyTrend: [],
+      weeklyTrend: [],
+      deviceRanking: []
+    };
   }
 }
 

@@ -378,13 +378,18 @@ router.delete('/files/directories/:id', authenticate, async (req, res) => {
 //  内部文件
 // =============================================================
 
-// GET /api/daily/files - 文件列表
+// GET /api/daily/files - 文件列表（支持全文搜索）
 router.get('/files', authenticate, async (req, res) => {
   try {
-    const { directoryId } = req.query;
+    const { directoryId, search } = req.query;
     let sql = 'SELECT * FROM internal_files WHERE 1=1';
     const params = [];
     if (directoryId) { sql += ' AND directory_id = ?'; params.push(directoryId); }
+    if (search && search.trim()) {
+      const kw = `%${search.trim()}%`;
+      sql += ' AND (name LIKE ? OR uploader LIKE ? OR file_type LIKE ?)';
+      params.push(kw, kw, kw);
+    }
     sql += ' ORDER BY created_at DESC';
     const [rows] = await pool.query(sql, params);
     res.json({ code: 200, data: rows });
@@ -417,6 +422,99 @@ router.delete('/files/:id', authenticate, async (req, res) => {
     res.json({ code: 200, message: '删除成功' });
   } catch (err) {
     console.error('[daily] deleteFile error:', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// =============================================================
+//  通知/消息系统
+// =============================================================
+
+// GET /api/daily/announcements/recent - 获取最近通知列表（用于顶部铃铛下拉）
+router.get('/announcements/recent', authenticate, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 5;
+    const [rows] = await pool.query(
+      `SELECT a.*, (SELECT COUNT(*) FROM notification_reads nr WHERE nr.announcement_id = a.id AND nr.user_id = ?) AS is_read
+       FROM announcements a
+       WHERE a.status = 'published' AND a.scope = 'internal'
+       ORDER BY a.publish_time DESC LIMIT ?`,
+      [req.user?.id || 0, limit]
+    );
+    const data = rows.map(r => ({ ...r, attachments: safeJsonParse(r.attachments) }));
+    res.json({ code: 200, data });
+  } catch (err) {
+    console.error('[daily] getRecentAnnouncements error:', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// GET /api/daily/announcements/unread-count - 未读通知数量
+router.get('/announcements/unread-count', authenticate, async (req, res) => {
+  try {
+    const [[{ cnt }]] = await pool.query(
+      `SELECT COUNT(*) AS cnt
+       FROM announcements a
+       WHERE a.status = 'published' AND a.scope = 'internal'
+       AND a.id NOT IN (
+         SELECT announcement_id FROM notification_reads WHERE user_id = ?
+       )`,
+      [req.user?.id || 0]
+    );
+    res.json({ code: 200, data: { count: cnt } });
+  } catch (err) {
+    console.error('[daily] getUnreadCount error:', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// POST /api/daily/announcements/:id/read - 标记公告为已读
+router.post('/announcements/:id/read', authenticate, async (req, res) => {
+  try {
+    const userId = req.user?.id || 0;
+    const username = req.user?.username || 'unknown';
+    // 使用 INSERT IGNORE 避免重复
+    await pool.execute(
+      'INSERT IGNORE INTO notification_reads (announcement_id, user_id, username) VALUES (?, ?, ?)',
+      [req.params.id, userId, username]
+    );
+    res.json({ code: 200, message: '已标记为已读' });
+  } catch (err) {
+    console.error('[daily] markAnnouncementRead error:', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// GET /api/daily/announcements/owner - 业主端通知列表
+router.get('/announcements/owner', authenticate, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT * FROM announcements
+       WHERE status = 'published' AND (scope IS NULL OR scope != 'internal')
+       ORDER BY is_top DESC, publish_time DESC`
+    );
+    const data = rows.map(r => ({ ...r, attachments: safeJsonParse(r.attachments) }));
+    res.json({ code: 200, data });
+  } catch (err) {
+    console.error('[daily] getOwnerAnnouncements error:', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// POST /api/daily/announcements/:id/owner-read - 业主标记阅读公告
+router.post('/announcements/:id/owner-read', authenticate, async (req, res) => {
+  try {
+    const { readerName, readerPhone } = req.body;
+    await pool.execute(
+      'INSERT IGNORE INTO announcement_reads (announcement_id, reader_name, reader_phone, reader_type) VALUES (?, ?, ?, ?)',
+      [req.params.id, readerName || req.user?.username || '业主', readerPhone || '', 'owner']
+    );
+    // 更新阅读计数
+    const [[{ cnt }]] = await pool.query('SELECT COUNT(*) AS cnt FROM announcement_reads WHERE announcement_id = ?', [req.params.id]);
+    await pool.execute('UPDATE announcements SET read_count = ? WHERE id = ?', [cnt, req.params.id]);
+    res.json({ code: 200, message: '已阅读', data: { readCount: cnt } });
+  } catch (err) {
+    console.error('[daily] ownerReadAnnouncement error:', err);
     res.status(500).json({ code: 500, message: '服务器内部错误' });
   }
 });

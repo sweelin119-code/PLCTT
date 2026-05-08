@@ -222,6 +222,95 @@ router.delete('/manage/devices/:id', authenticate, async (req, res) => {
 });
 
 // =============================================================
+//  记录统计（物业端）
+// =============================================================
+
+// GET /api/access/manage/records/stats - 开门记录统计
+router.get('/manage/records/stats', authenticate, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const today = new Date().toISOString().split('T')[0];
+
+    // 1. 今日统计
+    const [todayStats] = await pool.query(`
+      SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS successCount,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failedCount,
+        SUM(CASE WHEN status = 'expired' THEN 1 ELSE 0 END) AS expiredCount
+      FROM access_records WHERE DATE(access_time) = ?
+    `, [today]);
+
+    // 2. 开门方式分布
+    const [methodDistribution] = await pool.query(`
+      SELECT access_type, COUNT(*) AS count
+      FROM access_records WHERE DATE(access_time) = ?
+      GROUP BY access_type ORDER BY count DESC
+    `, [today]);
+
+    // 3. 今日每小时趋势（24小时）
+    const [hourlyTrend] = await pool.query(`
+      SELECT HOUR(access_time) AS hour,
+             COUNT(*) AS total,
+             SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS successCount
+      FROM access_records WHERE DATE(access_time) = ?
+      GROUP BY HOUR(access_time) ORDER BY hour ASC
+    `, [today]);
+
+    // 4. 近30天每日趋势
+    const dateWhere = 'ar.access_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)';
+    const [dailyTrend] = await pool.query(`
+      SELECT DATE(ar.access_time) AS date,
+             COUNT(*) AS total,
+             SUM(CASE WHEN ar.status = 'success' THEN 1 ELSE 0 END) AS successCount,
+             SUM(CASE WHEN ar.status = 'failed' THEN 1 ELSE 0 END) AS failedCount
+      FROM access_records ar WHERE ${dateWhere}
+      GROUP BY DATE(ar.access_time) ORDER BY date ASC
+    `);
+
+    // 5. 成功率趋势（近7天）
+    const weekWhere = 'ar.access_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)';
+    const [weeklyTrend] = await pool.query(`
+      SELECT DATE(ar.access_time) AS date,
+             COUNT(*) AS total,
+             SUM(CASE WHEN ar.status = 'success' THEN 1 ELSE 0 END) AS successCount
+      FROM access_records ar WHERE ${weekWhere}
+      GROUP BY DATE(ar.access_time) ORDER BY date ASC
+    `);
+
+    // 6. 设备排行TOP10
+    const [deviceRanking] = await pool.query(`
+      SELECT dd.device_name, dd.device_code, COUNT(*) AS total,
+             SUM(CASE WHEN ar.status = 'success' THEN 1 ELSE 0 END) AS successCount
+      FROM access_records ar
+      LEFT JOIN door_devices dd ON ar.device_id = dd.id
+      WHERE ar.access_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+      GROUP BY ar.device_id ORDER BY total DESC LIMIT 10
+    `);
+
+    res.json({
+      code: 200,
+      data: {
+        todayStats: {
+          total: todayStats[0].total,
+          successCount: todayStats[0].successCount || 0,
+          failedCount: todayStats[0].failedCount || 0,
+          expiredCount: todayStats[0].expiredCount || 0
+        },
+        methodDistribution,
+        hourlyTrend,
+        dailyTrend,
+        weeklyTrend,
+        deviceRanking
+      }
+    });
+  } catch (err) {
+    console.error('[access] getAccessStats error:', err);
+    res.status(500).json({ code: 500, message: '服务器内部错误' });
+  }
+});
+
+// =============================================================
 //  记录管理（物业端）
 // =============================================================
 

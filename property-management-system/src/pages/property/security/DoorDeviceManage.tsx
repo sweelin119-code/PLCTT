@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Table, Button, Modal, Form, Input, Select, Space, Card, Tag,
   message, Popconfirm, Switch, Tabs, DatePicker, Row, Col, Statistic,
+  Spin, Progress, Empty, Tooltip,
 } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined,
   ReloadOutlined, CheckCircleOutlined, CloseCircleOutlined,
-  DownloadOutlined,
+  DownloadOutlined, KeyOutlined, ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useCommunity } from '../../../contexts/CommunityContext';
@@ -18,9 +19,11 @@ import {
   getAccessRecordsManage,
   getVisitorAuthReviews,
   reviewVisitorAuth,
+  getAccessStats,
   type DoorDeviceManage as DoorDeviceManageType,
   type AccessRecord,
   type VisitorAuthReview,
+  type AccessStats,
 } from '../../../services/accessService';
 
 const { RangePicker } = DatePicker;
@@ -624,6 +627,234 @@ const AuthReviewTab: React.FC = () => {
   );
 };
 
+// ===== 开锁记录统计标签页 =====
+const AccessStatsTab: React.FC = () => {
+  const [stats, setStats] = useState<AccessStats | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  /** 安全计算百分比，避免 toFixed 调用非数字 */
+  const safePercent = (part: number, total: number): string => {
+    const p = Number(part);
+    const t = Number(total);
+    if (!t || !p || !isFinite(p) || !isFinite(t)) return '0';
+    return ((p / t) * 100).toFixed(1);
+  };
+
+  const loadStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getAccessStats();
+      setStats(data);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
+  const methodLabels: Record<string, string> = {
+    qr_code: '二维码',
+    password: '密码',
+    remote: '远程开门',
+    card: '门禁卡',
+    face: '人脸识别',
+    intercom: '对讲',
+  };
+
+  const methodColors: string[] = ['#1890ff','#52c41a','#faad14','#ff4d4f','#722ed1','#13c2c2'];
+
+  return (
+    <Spin spinning={loading}>
+      {stats && (
+        <div>
+          {/* 今日统计卡片 */}
+          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Col xs={12} sm={6}>
+              <Card size="small" styles={{ body: { padding: '16px 20px' } }}>
+                <Statistic
+                  title="今日开门总数"
+                  value={stats.todayStats.total}
+                  valueStyle={{ color: '#1890ff', fontSize: 28 }}
+                  prefix={<KeyOutlined />}
+                />
+              </Card>
+            </Col>
+            <Col xs={12} sm={6}>
+              <Card size="small" styles={{ body: { padding: '16px 20px' } }}>
+                <Statistic
+                  title="成功次数"
+                  value={stats.todayStats.successCount}
+                  valueStyle={{ color: '#52c41a', fontSize: 28 }}
+                  prefix={<CheckCircleOutlined />}
+                  suffix={
+                    stats.todayStats.total > 0 ? (
+                      <span style={{ color: '#999', fontSize: 14 }}>
+                        ({safePercent(stats.todayStats.successCount, stats.todayStats.total)}%)
+                      </span>
+                    ) : null
+                  }
+                />
+              </Card>
+            </Col>
+            <Col xs={12} sm={6}>
+              <Card size="small" styles={{ body: { padding: '16px 20px' } }}>
+                <Statistic
+                  title="失败次数"
+                  value={stats.todayStats.failedCount}
+                  valueStyle={{ color: '#ff4d4f', fontSize: 28 }}
+                  prefix={<CloseCircleOutlined />}
+                />
+              </Card>
+            </Col>
+            <Col xs={12} sm={6}>
+              <Card size="small" styles={{ body: { padding: '16px 20px' } }}>
+                <Statistic
+                  title="已过期"
+                  value={stats.todayStats.expiredCount}
+                  valueStyle={{ color: '#faad14', fontSize: 28 }}
+                  prefix={<ExclamationCircleOutlined />}
+                />
+              </Card>
+            </Col>
+          </Row>
+
+          <Row gutter={[16, 16]}>
+            {/* 开门方式分布 */}
+            <Col xs={24} md={12}>
+              <Card title="今日开门方式分布" size="small">
+                {stats.methodDistribution.length > 0 ? (
+                  <div style={{ padding: '8px 0' }}>
+                    {stats.methodDistribution.map((item, idx) => {
+                      const pct = safePercent(item.count, stats.todayStats.total);
+                      return (
+                        <div key={item.access_type} style={{ marginBottom: 12 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span>{methodLabels[item.access_type] || item.access_type}</span>
+                            <span style={{ fontWeight: 600 }}>{item.count} 次（{pct}%）</span>
+                          </div>
+                          <Progress
+                            percent={Number(pct)}
+                            strokeColor={methodColors[idx % methodColors.length]}
+                            size="small"
+                            showInfo={false}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Empty description="暂无数据" />
+                )}
+              </Card>
+            </Col>
+
+            {/* 每小时趋势 */}
+            <Col xs={24} md={12}>
+              <Card title="今日每小时开门趋势" size="small">
+                {stats.hourlyTrend.length > 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 200, padding: '8px 0' }}>
+                    {Array.from({ length: 24 }, (_, h) => {
+                      const point = stats.hourlyTrend.find(p => p.hour === h);
+                      const maxVal = Math.max(...stats.hourlyTrend.map(p => p.total), 1);
+                      const barH = point ? (point.total / maxVal) * 170 : 0;
+                      return (
+                        <Tooltip
+                          key={h}
+                          title={`${h}时: ${point?.total || 0}次（成功${point?.successCount || 0}次）`}
+                        >
+                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: 200, justifyContent: 'flex-end' }}>
+                            <div style={{
+                              width: '100%',
+                              height: barH,
+                              background: point ? (point.successCount === point.total ? '#52c41a' : '#1890ff') : '#f0f0f0',
+                              borderRadius: '2px 2px 0 0',
+                              minHeight: point ? 2 : 0,
+                              transition: 'height 0.3s',
+                            }} />
+                            <span style={{ fontSize: 10, marginTop: 2 }}>{h}</span>
+                          </div>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Empty description="暂无数据" />
+                )}
+              </Card>
+            </Col>
+
+            {/* 近30天每日趋势 */}
+            <Col xs={24}>
+              <Card title="近30天开门趋势" size="small">
+                {stats.dailyTrend.length > 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 200, padding: '8px 0', overflowX: 'auto' }}>
+                    {stats.dailyTrend.map((point) => {
+                      const maxVal = Math.max(...stats.dailyTrend.map(p => p.total), 1);
+                      const barH = (point.total / maxVal) * 170;
+                      return (
+                        <Tooltip
+                          key={point.date}
+                          title={`${point.date}: ${point.total}次（成功${point.successCount}次, 失败${point.failedCount}次）`}
+                        >
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: 200, justifyContent: 'flex-end', minWidth: 32 }}>
+                            <div style={{
+                              width: 24,
+                              height: barH,
+                              background: 'linear-gradient(to top, #1890ff, #52c41a)',
+                              borderRadius: '2px 2px 0 0',
+                              minHeight: point.total > 0 ? 2 : 0,
+                              transition: 'height 0.3s',
+                            }} />
+                            <span style={{ fontSize: 10, marginTop: 2 }}>{point.date.slice(5)}</span>
+                          </div>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Empty description="暂无数据" />
+                )}
+              </Card>
+            </Col>
+
+            {/* 设备排行 */}
+            <Col xs={24}>
+              <Card title="设备开门排行（近30天）" size="small">
+                {stats.deviceRanking.length > 0 ? (
+                  <Table
+                    dataSource={stats.deviceRanking}
+                    rowKey="device_code"
+                    pagination={false}
+                    size="small"
+                    columns={[
+                      { title: '排名', key: 'rank', width: 60, render: (_: any, __: any, idx: number) => <Tag color={idx < 3 ? 'gold' : undefined}>{idx + 1}</Tag> },
+                      { title: '设备名称', dataIndex: 'device_name', key: 'device_name' },
+                      { title: '设备编号', dataIndex: 'device_code', key: 'device_code' },
+                      { title: '总开门数', dataIndex: 'total', key: 'total' },
+                      {
+                        title: '成功率',
+                        key: 'successRate',
+                        render: (_: any, record: any) => {
+                          const rate = safePercent(record.successCount, record.total);
+                          return <Progress percent={Number(rate)} size="small" />;
+                        },
+                      },
+                    ]}
+                  />
+                ) : (
+                  <Empty description="暂无数据" />
+                )}
+              </Card>
+            </Col>
+          </Row>
+        </div>
+      )}
+    </Spin>
+  );
+};
+
 // ===== 主页面：智能门禁管理 =====
 const DoorDeviceManage: React.FC = () => {
   const { currentCommunity } = useCommunity();
@@ -644,6 +875,11 @@ const DoorDeviceManage: React.FC = () => {
       key: 'review',
       label: '访客授权审核',
       children: <AuthReviewTab />,
+    },
+    {
+      key: 'stats',
+      label: '开锁记录统计',
+      children: <AccessStatsTab />,
     },
   ];
 

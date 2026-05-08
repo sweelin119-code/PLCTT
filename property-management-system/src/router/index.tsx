@@ -106,6 +106,7 @@ import CommitteeSystemSettings from '../pages/committee/SystemSettings';
 
 // 收费管理页面
 import FeeItemManage from '../pages/property/finance/FeeItemManage';
+import ParkingChargeExecute from '../pages/property/finance/ParkingChargeExecute';
 import BillManage from '../pages/property/finance/BillManage';
 import PaymentManage from '../pages/property/finance/PaymentManage';
 import CollectionManage from '../pages/property/finance/CollectionManage';
@@ -341,7 +342,7 @@ const router = createBrowserRouter([
       { path: 'security-guard/patrol', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>巡逻管理 - 开发中</div> },
       { path: 'security-guard/monitor', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>安全监控 - 开发中</div> },
       { path: 'security-guard/visitor', element: <VisitorManage /> },
-      { path: 'security-guard/parking', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>停车收费执行 - 开发中</div> },
+      { path: 'security-guard/parking', element: <ParkingChargeExecute /> },
       { path: 'security-guard/intercom', element: <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>对讲系统使用 - 开发中</div> },
 
       // 智能门禁管理

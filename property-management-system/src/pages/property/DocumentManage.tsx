@@ -61,7 +61,7 @@ const DocumentManage: React.FC = () => {
     try {
       const [dirs, fileData] = await Promise.all([
         getDirectories(),
-        getFiles(selectedDir || undefined),
+        getFiles(selectedDir || undefined, searchText || undefined),
       ]);
       setDirectories(dirs);
       setFiles(fileData);
@@ -72,7 +72,8 @@ const DocumentManage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [selectedDir]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDir, searchText]);
 
   // 构建树形结构
   const buildTreeData = (parentId: string | null): any[] => {
@@ -162,10 +163,6 @@ const DocumentManage: React.FC = () => {
     setPreviewFile(record);
     setPreviewVisible(true);
   };
-
-  const filteredFiles = searchText
-    ? files.filter(f => f.name.toLowerCase().includes(searchText.toLowerCase()))
-    : files;
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + ' B';
@@ -284,7 +281,7 @@ const DocumentManage: React.FC = () => {
               <FolderOutlined />
               <span>{selectedDirName}</span>
               <Text type="secondary" style={{ fontSize: 12 }}>
-                （{filteredFiles.length} 个文件）
+                （{files.length} 个文件）
               </Text>
             </Space>
           }
@@ -300,9 +297,9 @@ const DocumentManage: React.FC = () => {
             />
           }
         >
-          {filteredFiles.length > 0 ? (
+          {files.length > 0 ? (
             <Table
-              dataSource={filteredFiles}
+              dataSource={files}
               columns={columns}
               rowKey="id"
               loading={loading}

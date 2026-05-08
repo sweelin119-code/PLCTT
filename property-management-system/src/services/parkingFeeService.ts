@@ -250,6 +250,18 @@ export async function deleteParkingFeeRule(id: number): Promise<boolean> {
 
 // ===== API 函数：车辆出入管理 =====
 
+/** 车辆入场登记 */
+export async function createParkingEntry(data: {
+  projectId: number;
+  plateNo: string;
+  vehicleType?: string;
+  entrance?: string;
+  remark?: string;
+}): Promise<ParkingEntryRecord> {
+  const res = await apiClient.post('/parking-fee/entries', data);
+  return toCamelCase(res.data.data);
+}
+
 /** 获取车辆出入记录 */
 export async function getParkingEntryRecords(params: ParkingEntryQueryParams): Promise<{ list: ParkingEntryRecord[]; total: number }> {
   const res = await apiClient.get('/parking-fee/entries', { params });
